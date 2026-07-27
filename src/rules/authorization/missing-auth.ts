@@ -18,7 +18,66 @@ const AUTH_MIDDLEWARE_PATTERNS = [
   'requireUser',
   'isLoggedIn',
   'withAuth',
+  // common custom naming patterns
+  'auth',
+  'guard',
+  'middleware',
+  'verify',
+  'token',
+  'session',
+  'permission',
 ];
+
+/**
+ * Extract all identifier names from a middleware argument.
+ * Handles: identifier, callExpression, arrayExpression of the above.
+ */
+function extractMiddlewareNames(arg: BabelTypes.Node, source: string): string[] {
+  // Plain identifier: authenticate
+  if (arg.type === 'Identifier') return [arg.name];
+
+  // Call expression: passport.authenticate(), verifyToken()
+  if (arg.type === 'CallExpression') {
+    return [source.slice(arg.start ?? 0, arg.end ?? 0)];
+  }
+
+  // Array of middleware: [auth, requireRole('admin')]
+  if (arg.type === 'ArrayExpression') {
+    return (arg as BabelTypes.ArrayExpression).elements.flatMap(el => {
+      if (!el) return [];
+      return extractMiddlewareNames(el, source);
+    });
+  }
+
+  return [];
+}
+
+/**
+ * Returns true if the given name or source snippet looks like an auth middleware.
+ * Matches both explicit patterns and heuristic signals (checks token/authorization/cookie).
+ */
+function looksLikeAuthMiddleware(nameOrSource: string): boolean {
+  const lower = nameOrSource.toLowerCase();
+
+  // Match known auth-related keywords in the identifier name
+  if (AUTH_MIDDLEWARE_PATTERNS.some(p => lower.includes(p.toLowerCase()))) return true;
+
+  // Heuristic: the source snippet accesses authorization header, verifies a token,
+  // or reads an auth cookie — strong signal it is an auth middleware even with a
+  // custom name like authSuperAdminOrAdminMiddleware
+  if (
+    lower.includes('authorization') ||
+    lower.includes('verifytoken') ||
+    lower.includes('req.cookies') ||
+    lower.includes('bearer') ||
+    lower.includes('decoded') ||
+    lower.includes('req.user') ||
+    lower.includes('req.admin') ||
+    lower.includes('req.super_admin')
+  ) return true;
+
+  return false;
+}
 
 const SENSITIVE_HTTP_METHODS = ['delete', 'patch', 'put'];
 
@@ -83,20 +142,38 @@ export const missingAuthMiddlewareRule: Rule = {
         const isSensitivePath = SENSITIVE_ROUTE_PATTERNS.some(p => routePath.includes(p));
         if (!isSensitivePath) return;
 
-        // Check if any middleware argument is an auth middleware
+        // Check if any middleware argument is an auth middleware.
+        // Handles: plain identifier, call expression, array of middleware.
         const middlewareArgs = args.slice(1, -1); // between path and handler
 
+        // Also consider the last arg if there are only 2 total (path + handler)
+        // because some patterns are: router.patch(path, [middleware], handler)
+        // where slice(1,-1) would pick up the array correctly.
+        // But if args.length === 2, there are no middleware args — genuinely missing.
         const hasAuthMiddleware = middlewareArgs.some(arg => {
-          if (arg.type === 'Identifier') {
-            return AUTH_MIDDLEWARE_PATTERNS.some(pattern =>
-              arg.name.toLowerCase().includes(pattern.toLowerCase())
-            );
-          }
-          if (arg.type === 'CallExpression') {
-            const argSource = context.source.slice(arg.start || 0, arg.end || 0);
-            return AUTH_MIDDLEWARE_PATTERNS.some(p => argSource.toLowerCase().includes(p.toLowerCase()));
-          }
-          return false;
+          const names = extractMiddlewareNames(arg, context.source);
+          return names.some(n => {
+            // Check name alone first (fast path)
+            if (looksLikeAuthMiddleware(n)) return true;
+            // For identifiers, also look up the variable definition in the source
+            // to check if the function body contains auth signals
+            if (arg.type === 'Identifier' || arg.type === 'ArrayExpression') {
+              const varName = n.trim();
+              // Simple heuristic: search for `const varName` or `function varName`
+              // and check the surrounding ~500 chars for auth signals
+              const defIndex = context.source.indexOf(`const ${varName}`);
+              if (defIndex !== -1) {
+                const snippet = context.source.slice(defIndex, defIndex + 600);
+                if (looksLikeAuthMiddleware(snippet)) return true;
+              }
+              const fnIndex = context.source.indexOf(`function ${varName}`);
+              if (fnIndex !== -1) {
+                const snippet = context.source.slice(fnIndex, fnIndex + 600);
+                if (looksLikeAuthMiddleware(snippet)) return true;
+              }
+            }
+            return false;
+          });
         });
 
         if (!hasAuthMiddleware) {

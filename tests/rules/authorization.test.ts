@@ -23,6 +23,35 @@ describe('AUTHZ001 – Sensitive route missing auth', () => {
     expect(missingAuthMiddlewareRule.run(ctx)).toHaveLength(0);
   });
 
+  it('does not flag route with middleware passed as an array', () => {
+    const ctx = createContext(`
+      router.patch('/users/:user_id', [authSuperAdminOrAdminMiddleware], superAdminController.editUser);
+    `);
+    expect(missingAuthMiddlewareRule.run(ctx)).toHaveLength(0);
+  });
+
+  it('does not flag route where array middleware name contains auth signal', () => {
+    // Real-world pattern: custom middleware with auth in the name
+    const ctx = createContext(`
+      router.patch('/users/:id', [checkAdminPermission], handler);
+    `);
+    expect(missingAuthMiddlewareRule.run(ctx)).toHaveLength(0);
+  });
+
+  it('does not flag route where middleware definition in source contains auth signals', () => {
+    const ctx = createContext(
+      `const myCustomGuard = async (req, res, next) => {
+        const token = req.headers.authorization?.split(' ')[1];
+        if (!token) return res.status(403).json({ message: 'Access denied' });
+        const decoded = await verifyToken(token, process.env.SECRET);
+        req.user = decoded;
+        next();
+      };
+      router.patch('/users/:id', myCustomGuard, handler);`,
+    );
+    expect(missingAuthMiddlewareRule.run(ctx)).toHaveLength(0);
+  });
+
   it('does not flag GET routes (read-only)', () => {
     const ctx = createContext(`
       router.get('/users', async (req, res) => {
