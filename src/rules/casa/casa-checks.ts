@@ -89,15 +89,19 @@ export const casaRefreshTokenStorageRule: Rule = {
 
 /**
  * CASA002 - Missing OAuth token revocation
+ *
+ * This is a PROJECT-LEVEL check. It fires at most once, from the application
+ * entry file, only when the project actually uses an OAuth library.
+ * It scans all project files for revocation patterns before reporting.
  */
 export const casaTokenRevocationRule: Rule = {
   id: 'CASA002',
   severity: 'high',
   category: 'CASA Readiness',
   title: 'Missing OAuth Token Revocation',
-  description: 'No OAuth token revocation endpoint or mechanism detected',
+  description: 'No OAuth token revocation endpoint or mechanism detected in the project',
   detectorType: 'file',
-  remediation: 'Implement token revocation per RFC 7009. Provide an endpoint that invalidates tokens and remove them from storage.',
+  remediation: 'Implement token revocation per RFC 7009. Provide an endpoint that invalidates tokens and removes them from storage.',
   references: [
     {
       title: 'RFC 7009 - OAuth Token Revocation',
@@ -109,41 +113,77 @@ export const casaTokenRevocationRule: Rule = {
   run(context: RuleContext): Finding[] {
     if (!context.ast) return [];
 
-    const isAppFile =
-      context.filePath.endsWith('app.ts') ||
-      context.filePath.endsWith('app.js') ||
-      context.filePath.endsWith('server.ts') ||
-      context.filePath.endsWith('server.js') ||
-      context.filePath.endsWith('index.ts') ||
-      context.filePath.endsWith('index.js');
+    // Only trigger once per project — from the entry file
+    const { filePath, projectRoot, allFiles } = context;
+    const rel = filePath.replace(/\\/g, '/').replace(projectRoot.replace(/\\/g, '/'), '').replace(/^\//, '');
+    const depth = rel.split('/').length;
+    const basename = rel.split('/').pop() ?? '';
+    const entryNames = ['app.ts', 'app.js', 'server.ts', 'server.js', 'main.ts', 'main.js', 'index.ts', 'index.js'];
+    const isEntry = entryNames.includes(basename) && depth <= 2 && (
+      context.source.includes('express()') ||
+      context.source.includes('app.listen') ||
+      context.source.includes('app.use(')
+    );
+    if (!isEntry) return [];
 
-    if (!isAppFile) return [];
+    // Require the project to actually use OAuth — check all files for OAuth imports
+    const OAUTH_PACKAGES = [
+      "'passport'", '"passport"',
+      "'openid-client'", '"openid-client"',
+      "'passport-google-oauth'", '"passport-google-oauth"',
+      "'passport-oauth2'", '"passport-oauth2"',
+      "'passport-github'", '"passport-github"',
+    ];
 
-    const { source } = context;
+    const OAUTH_PATTERNS = [
+      'authorizationURL', 'callbackURL',
+      'access_token', 'refresh_token',
+      'authorization_code', 'id_token',
+      'oauth2', 'OAuth2',
+    ];
 
-    // Look for revoke endpoint patterns
-    const hasRevocation =
-      source.includes('revoke') ||
-      source.includes('/logout') ||
-      source.includes('/signout') ||
-      source.includes('token_revocation') ||
-      source.includes('revokeToken');
+    // Read all project source files to determine if OAuth is used at all,
+    // and whether any file implements revocation.
+    let projectUsesOAuth = false;
+    let projectHasRevocation = false;
 
-    if (!hasRevocation) {
-      return [{
-        ruleId: 'CASA002',
-        severity: 'high',
-        category: 'CASA Readiness',
-        title: 'Missing OAuth Token Revocation',
-        description: 'No token revocation pattern detected in application entry',
-        impact: 'Without revocation, compromised tokens remain valid until expiration, allowing extended unauthorized access.',
-        remediation: 'Implement a /auth/revoke endpoint following RFC 7009',
-        references: casaTokenRevocationRule.references,
-        filePath: context.filePath,
-      }];
+    for (const file of allFiles) {
+      if (!existsSync(file)) continue;
+      let src: string;
+      try { src = readFileSync(file, 'utf-8'); } catch { continue; }
+
+      if (!projectUsesOAuth) {
+        projectUsesOAuth =
+          OAUTH_PACKAGES.some(p => src.includes(p)) ||
+          OAUTH_PATTERNS.some(p => src.includes(p));
+      }
+
+      if (!projectHasRevocation) {
+        projectHasRevocation =
+          src.includes('revoke') ||
+          src.includes('revokeToken') ||
+          src.includes('token_revocation') ||
+          src.includes('/logout') ||
+          src.includes('/signout');
+      }
+
+      if (projectUsesOAuth && projectHasRevocation) break;
     }
 
-    return [];
+    // Only report if the project actually uses OAuth but has no revocation
+    if (!projectUsesOAuth || projectHasRevocation) return [];
+
+    return [{
+      ruleId: 'CASA002',
+      severity: 'high',
+      category: 'CASA Readiness',
+      title: 'Missing OAuth Token Revocation',
+      description: 'Project uses OAuth but no token revocation endpoint or mechanism was found',
+      impact: 'Without revocation, compromised tokens remain valid until expiration, allowing extended unauthorized access.',
+      remediation: 'Implement a /auth/revoke endpoint following RFC 7009',
+      references: casaTokenRevocationRule.references,
+      filePath,
+    }];
   },
 };
 
