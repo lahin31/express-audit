@@ -16,19 +16,39 @@ describe('HTTP001 – Helmet missing', () => {
     expect(helmetMissingRule.run(ctx)).toHaveLength(1);
   });
 
-  it('does not flag when helmet is imported', () => {
+  it('does not flag when helmet is imported directly in entry file', () => {
     const ctx = createContextFromFixture(
-      `import helmet from 'helmet';\napp.use(helmet());`,
+      `import helmet from 'helmet';\nconst app = express();\napp.use(helmet());`,
       'app.js',
     );
     expect(helmetMissingRule.run(ctx)).toHaveLength(0);
   });
 
-  it('does not flag non-entry files', () => {
+  it('does not flag when helmet is imported in a middleware file listed in allFiles', () => {
+    // Simulate: index.ts imports from middlewares/default.ts which imports helmet
+    const { writeFileSync, unlinkSync } = require('fs');
+    const { join } = require('path');
+    const { tmpdir } = require('os');
+
+    const middlewareFile = join(tmpdir(), `ea-test-middleware-${Date.now()}.ts`);
+    writeFileSync(middlewareFile, `import helmet from 'helmet';\napp.use(helmet());`);
+
     const ctx = createContextFromFixture(
-      `const x = 1;`,
-      'routes/users.ts',
+      `const express = require('express');\nconst app = express();\napp.listen(3000);`,
+      'index.ts',
     );
+    // Inject the middleware file into allFiles
+    const ctxWithMiddleware = { ...ctx, allFiles: [ctx.filePath, middlewareFile] };
+
+    try {
+      expect(helmetMissingRule.run(ctxWithMiddleware)).toHaveLength(0);
+    } finally {
+      try { unlinkSync(middlewareFile); } catch {}
+    }
+  });
+
+  it('does not flag non-entry files', () => {
+    const ctx = createContextFromFixture(`const x = 1;`, 'routes/users.ts');
     expect(helmetMissingRule.run(ctx)).toHaveLength(0);
   });
 });

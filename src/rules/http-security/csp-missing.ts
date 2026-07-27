@@ -1,9 +1,69 @@
 import type { Rule, RuleContext, Finding } from '../../types/index.js';
 import type { File } from '@babel/types';
-import { traverse, getObjectProperty, getNodeLine } from '../../core/ast-helpers.js';
+import { traverse, getObjectProperty } from '../../core/ast-helpers.js';
 import type { NodePath } from '@babel/traverse';
 import type * as BabelTypes from '@babel/types';
 import { isEntryFile } from '../../core/is-entry-file.js';
+import { parseFile } from '../../parser/index.js';
+import { readFileSync, existsSync } from 'fs';
+
+/**
+ * Returns true if the given AST contains a CSP configuration.
+ */
+function astHasCSP(ast: File): boolean {
+  let found = false;
+
+  traverse(ast, {
+    CallExpression(path: NodePath<BabelTypes.CallExpression>) {
+      const callee = path.node.callee;
+
+      // helmet.contentSecurityPolicy()
+      if (
+        callee.type === 'MemberExpression' &&
+        callee.property.type === 'Identifier' &&
+        callee.property.name === 'contentSecurityPolicy'
+      ) {
+        found = true;
+      }
+
+      // helmet() with no args — includes CSP by default
+      // helmet({ contentSecurityPolicy: ... }) — only if not explicitly false
+      if (callee.type === 'Identifier' && callee.name === 'helmet') {
+        const arg = path.node.arguments[0];
+        if (!arg) {
+          found = true;
+        } else if (arg.type === 'ObjectExpression') {
+          const cspProp = getObjectProperty(arg, 'contentSecurityPolicy');
+          if (cspProp) {
+            if (
+              cspProp.type !== 'BooleanLiteral' ||
+              (cspProp as BabelTypes.BooleanLiteral).value !== false
+            ) {
+              found = true;
+            }
+          }
+        }
+      }
+
+      // res.setHeader('Content-Security-Policy', ...)
+      if (
+        callee.type === 'MemberExpression' &&
+        callee.property.type === 'Identifier' &&
+        callee.property.name === 'setHeader'
+      ) {
+        const keyArg = path.node.arguments[0];
+        if (
+          keyArg?.type === 'StringLiteral' &&
+          keyArg.value.toLowerCase().includes('content-security-policy')
+        ) {
+          found = true;
+        }
+      }
+    },
+  });
+
+  return found;
+}
 
 export const cspMissingRule: Rule = {
   id: 'CSP001',
@@ -32,77 +92,33 @@ export const cspMissingRule: Rule = {
     if (!context.ast) return [];
     if (!isEntryFile(context.filePath, context.projectRoot, context.source)) return [];
 
-    const ast = context.ast as File;
-    let hasCSP = false;
-    let hasHelmetWithoutCSP = false;
+    // Check the entry file first
+    if (astHasCSP(context.ast as File)) return [];
 
-    traverse(ast, {
-      CallExpression(path: NodePath<BabelTypes.CallExpression>) {
-        const callee = path.node.callee;
+    // Scan all project files — CSP may be set in a dedicated middleware file
+    for (const filePath of context.allFiles) {
+      if (filePath === context.filePath) continue;
+      if (!existsSync(filePath)) continue;
 
-        // Check for helmet.contentSecurityPolicy()
-        if (
-          callee.type === 'MemberExpression' &&
-          callee.property.type === 'Identifier' &&
-          callee.property.name === 'contentSecurityPolicy'
-        ) {
-          hasCSP = true;
-        }
+      let src: string;
+      try { src = readFileSync(filePath, 'utf-8'); } catch { continue; }
+      // Quick string filter before full parse
+      if (!src.includes('helmet') && !src.includes('content-security-policy')) continue;
 
-        // Check for helmet({ contentSecurityPolicy: ... })
-        if (
-          callee.type === 'Identifier' &&
-          callee.name === 'helmet'
-        ) {
-          const arg = path.node.arguments[0];
-          if (arg?.type === 'ObjectExpression') {
-            const cspProp = getObjectProperty(arg, 'contentSecurityPolicy');
-            if (cspProp) {
-              // Check it's not explicitly disabled
-              if (
-                cspProp.type !== 'BooleanLiteral' ||
-                (cspProp as BabelTypes.BooleanLiteral).value !== false
-              ) {
-                hasCSP = true;
-              }
-            }
-          } else if (!arg) {
-            // helmet() without options - it includes CSP by default
-            hasCSP = true;
-          }
-        }
-
-        // Check for res.setHeader('Content-Security-Policy', ...)
-        if (
-          callee.type === 'MemberExpression' &&
-          callee.property.type === 'Identifier' &&
-          callee.property.name === 'setHeader'
-        ) {
-          const keyArg = path.node.arguments[0];
-          if (
-            keyArg?.type === 'StringLiteral' &&
-            keyArg.value.toLowerCase().includes('content-security-policy')
-          ) {
-            hasCSP = true;
-          }
-        }
-      },
-    });
-
-    if (!hasCSP) {
-      return [{
-        ruleId: 'CSP001',
-        severity: 'medium',
-        category: 'HTTP Security',
-        title: 'Missing Content Security Policy',
-        description: 'No Content Security Policy header detected',
-        impact: 'Without CSP, the application is vulnerable to Cross-Site Scripting (XSS) and data injection attacks.',
-        remediation: 'Use helmet with CSP: app.use(helmet({ contentSecurityPolicy: { directives: { defaultSrc: ["\'self\'"] } } }))',
-        references: cspMissingRule.references,
-        filePath: context.filePath,
-      }];
+      const { ast } = parseFile(filePath);
+      if (ast && astHasCSP(ast)) return [];
     }
 
-    return [];
+    return [{
+      ruleId: 'CSP001',
+      severity: 'medium',
+      category: 'HTTP Security',
+      title: 'Missing Content Security Policy',
+      description: 'No Content Security Policy header detected in the project',
+      impact: 'Without CSP, the application is vulnerable to Cross-Site Scripting (XSS) and data injection attacks.',
+      remediation: cspMissingRule.remediation,
+      references: cspMissingRule.references,
+      filePath: context.filePath,
+    }];
   },
 };
