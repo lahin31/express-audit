@@ -1,0 +1,319 @@
+import type { Rule, RuleContext, Finding } from '../../types/index.js';
+import type { File } from '@babel/types';
+import { traverse, getObjectProperty, getStringValue, getNodeLine, findImports } from '../../core/ast-helpers.js';
+import type { NodePath } from '@babel/traverse';
+import type * as BabelTypes from '@babel/types';
+import { readFileSync, existsSync } from 'fs';
+import { join } from 'path';
+
+const CASA_REFERENCES = [
+  {
+    title: 'Google CASA Requirements',
+    url: 'https://appdefensealliance.dev/casa',
+  },
+  {
+    title: 'OWASP ASVS',
+    url: 'https://owasp.org/www-project-application-security-verification-standard/',
+  },
+];
+
+/**
+ * CASA001 - Refresh tokens stored insecurely
+ */
+export const casaRefreshTokenStorageRule: Rule = {
+  id: 'CASA001',
+  severity: 'critical',
+  category: 'CASA Readiness',
+  title: 'Refresh Token Stored Insecurely',
+  description: 'OAuth refresh tokens appear to be stored without encryption or in a potentially insecure location',
+  detectorType: 'ast',
+  remediation: 'Encrypt refresh tokens before storage. Use a KMS or envelope encryption. Store in a secure, access-controlled database with audit logging.',
+  references: CASA_REFERENCES,
+
+  run(context: RuleContext): Finding[] {
+    if (!context.ast) return [];
+
+    const ast = context.ast as File;
+    const findings: Finding[] = [];
+
+    traverse(ast, {
+      AssignmentExpression(path: NodePath<BabelTypes.AssignmentExpression>) {
+        const { left, right } = path.node;
+
+        // Look for refresh_token = something (without encryption)
+        const isRefreshToken = (node: BabelTypes.Node): boolean => {
+          if (node.type === 'MemberExpression') {
+            const prop = node.property;
+            if (prop.type === 'Identifier') {
+              return prop.name === 'refresh_token' || prop.name === 'refreshToken';
+            }
+          }
+          if (node.type === 'Identifier') {
+            return node.name === 'refresh_token' || node.name === 'refreshToken';
+          }
+          return false;
+        };
+
+        if (isRefreshToken(left)) {
+          // Check if the right side involves encryption
+          const rightSource = context.source.slice(right.start || 0, right.end || 0);
+          const hasEncryption =
+            rightSource.includes('encrypt') ||
+            rightSource.includes('cipher') ||
+            rightSource.includes('crypto.') ||
+            rightSource.includes('aes') ||
+            rightSource.includes('kms') ||
+            rightSource.includes('KMS');
+
+          if (!hasEncryption) {
+            findings.push({
+              ruleId: 'CASA001',
+              severity: 'critical',
+              category: 'CASA Readiness',
+              title: 'Refresh Token May Be Stored Unencrypted',
+              description: 'Refresh token assignment detected without visible encryption',
+              impact: 'Unencrypted refresh tokens in databases or storage can be stolen and used to impersonate users indefinitely.',
+              remediation: 'Encrypt refresh tokens using AES-256 or use a key management service before storage.',
+              references: CASA_REFERENCES,
+              filePath: context.filePath,
+              line: getNodeLine(path.node),
+            });
+          }
+        }
+      },
+    });
+
+    return findings;
+  },
+};
+
+/**
+ * CASA002 - Missing OAuth token revocation
+ */
+export const casaTokenRevocationRule: Rule = {
+  id: 'CASA002',
+  severity: 'high',
+  category: 'CASA Readiness',
+  title: 'Missing OAuth Token Revocation',
+  description: 'No OAuth token revocation endpoint or mechanism detected',
+  detectorType: 'file',
+  remediation: 'Implement token revocation per RFC 7009. Provide an endpoint that invalidates tokens and remove them from storage.',
+  references: [
+    {
+      title: 'RFC 7009 - OAuth Token Revocation',
+      url: 'https://tools.ietf.org/html/rfc7009',
+    },
+    ...CASA_REFERENCES,
+  ],
+
+  run(context: RuleContext): Finding[] {
+    if (!context.ast) return [];
+
+    const isAppFile =
+      context.filePath.endsWith('app.ts') ||
+      context.filePath.endsWith('app.js') ||
+      context.filePath.endsWith('server.ts') ||
+      context.filePath.endsWith('server.js') ||
+      context.filePath.endsWith('index.ts') ||
+      context.filePath.endsWith('index.js');
+
+    if (!isAppFile) return [];
+
+    const { source } = context;
+
+    // Look for revoke endpoint patterns
+    const hasRevocation =
+      source.includes('revoke') ||
+      source.includes('/logout') ||
+      source.includes('/signout') ||
+      source.includes('token_revocation') ||
+      source.includes('revokeToken');
+
+    if (!hasRevocation) {
+      return [{
+        ruleId: 'CASA002',
+        severity: 'high',
+        category: 'CASA Readiness',
+        title: 'Missing OAuth Token Revocation',
+        description: 'No token revocation pattern detected in application entry',
+        impact: 'Without revocation, compromised tokens remain valid until expiration, allowing extended unauthorized access.',
+        remediation: 'Implement a /auth/revoke endpoint following RFC 7009',
+        references: casaTokenRevocationRule.references,
+        filePath: context.filePath,
+      }];
+    }
+
+    return [];
+  },
+};
+
+/**
+ * CASA003 - OAuth credentials logged
+ */
+export const casaOauthCredentialsLoggedRule: Rule = {
+  id: 'CASA003',
+  severity: 'critical',
+  category: 'CASA Readiness',
+  title: 'OAuth Credentials in Logs',
+  description: 'OAuth access tokens, refresh tokens, or client secrets may be written to logs',
+  detectorType: 'ast',
+  remediation: 'Never log OAuth credentials. Sanitize all token-related values before logging.',
+  references: CASA_REFERENCES,
+
+  run(context: RuleContext): Finding[] {
+    if (!context.ast) return [];
+
+    const ast = context.ast as File;
+    const findings: Finding[] = [];
+
+    const sensitiveOauthProps = [
+      'access_token', 'accessToken',
+      'refresh_token', 'refreshToken',
+      'client_secret', 'clientSecret',
+      'id_token', 'idToken',
+    ];
+
+    traverse(ast, {
+      CallExpression(path: NodePath<BabelTypes.CallExpression>) {
+        const callee = path.node.callee;
+
+        // Detect logging calls
+        const isLog =
+          callee.type === 'MemberExpression' &&
+          callee.object.type === 'Identifier' &&
+          (callee.object.name === 'console' || callee.object.name === 'logger') &&
+          callee.property.type === 'Identifier';
+
+        if (!isLog) return;
+
+        for (const arg of path.node.arguments) {
+          const argSource = context.source.slice(arg.start || 0, arg.end || 0);
+          const found = sensitiveOauthProps.find(prop => argSource.includes(prop));
+          if (found) {
+            findings.push({
+              ruleId: 'CASA003',
+              severity: 'critical',
+              category: 'CASA Readiness',
+              title: 'OAuth Credentials May Be Logged',
+              description: `OAuth credential property "${found}" may be written to logs`,
+              impact: 'Logged OAuth tokens can be stolen from log files, aggregation systems, or monitoring dashboards.',
+              remediation: `Remove ${found} from log statements`,
+              references: CASA_REFERENCES,
+              filePath: context.filePath,
+              line: getNodeLine(path.node),
+            });
+          }
+        }
+      },
+    });
+
+    return findings;
+  },
+};
+
+/**
+ * CASA004 - Missing audit logging for OAuth events
+ */
+export const casaAuditLoggingRule: Rule = {
+  id: 'CASA004',
+  severity: 'medium',
+  category: 'CASA Readiness',
+  title: 'Missing Audit Logging for OAuth Events',
+  description: 'No audit logging detected for OAuth authorization events',
+  detectorType: 'file',
+  remediation: 'Log authentication and authorization events including: login, logout, token issue, token revocation, and permission changes.',
+  references: [
+    {
+      title: 'OWASP Logging Cheat Sheet',
+      url: 'https://cheatsheetseries.owasp.org/cheatsheets/Logging_Cheat_Sheet.html',
+    },
+    ...CASA_REFERENCES,
+  ],
+
+  run(context: RuleContext): Finding[] {
+    const isOAuthFile =
+      context.filePath.includes('auth') ||
+      context.filePath.includes('oauth') ||
+      context.filePath.includes('login');
+
+    if (!isOAuthFile) return [];
+
+    const { source } = context;
+
+    const hasAuditLog =
+      source.includes('audit') ||
+      source.includes('auditLog') ||
+      source.includes('audit_log') ||
+      (source.includes('logger') && (source.includes('login') || source.includes('oauth') || source.includes('token')));
+
+    if (!hasAuditLog) {
+      return [{
+        ruleId: 'CASA004',
+        severity: 'medium',
+        category: 'CASA Readiness',
+        title: 'Missing OAuth Audit Logging',
+        description: 'No audit logging detected for OAuth/authentication events',
+        impact: 'Without audit logs, security incidents are difficult to detect, investigate, and respond to.',
+        remediation: 'Add structured audit logging for: token issuance, login events, logout, token revocation, and auth failures.',
+        references: casaAuditLoggingRule.references,
+        filePath: context.filePath,
+      }];
+    }
+
+    return [];
+  },
+};
+
+/**
+ * CASA005 - Missing nonce validation
+ */
+export const casaNonceRule: Rule = {
+  id: 'CASA005',
+  severity: 'high',
+  category: 'CASA Readiness',
+  title: 'Missing Nonce Validation',
+  description: 'OpenID Connect flows may be missing nonce validation',
+  detectorType: 'ast',
+  remediation: 'Include a nonce in the authorization request and validate it in the ID token to prevent replay attacks.',
+  references: [
+    {
+      title: 'OpenID Connect Nonce',
+      url: 'https://openid.net/specs/openid-connect-core-1_0.html#NonceNotes',
+    },
+    ...CASA_REFERENCES,
+  ],
+
+  run(context: RuleContext): Finding[] {
+    if (!context.ast) return [];
+
+    const isOIDCFile =
+      context.filePath.includes('auth') ||
+      context.filePath.includes('oidc') ||
+      context.filePath.includes('openid');
+
+    if (!isOIDCFile) return [];
+
+    const ast = context.ast as File;
+    const hasOIDC = findImports(ast, 'openid-client') || findImports(ast, 'passport-openidconnect');
+    if (!hasOIDC) return [];
+
+    const { source } = context;
+    const hasNonce = source.includes('nonce');
+
+    if (!hasNonce) {
+      return [{
+        ruleId: 'CASA005',
+        severity: 'high',
+        category: 'CASA Readiness',
+        title: 'Missing Nonce Validation',
+        description: 'OpenID Connect usage detected without nonce validation',
+        impact: 'Without nonce validation, ID tokens can be replayed by attackers.',
+        remediation: 'Generate and store a nonce per request, then validate it in the token response.',
+        references: casaNonceRule.references,
+        filePath: context.filePath,
+      }];
+    }
+
+    return [];
+  },
+};
