@@ -99,7 +99,19 @@ express-audit tells you *what* is wrong and *where*. An LLM is useful for explai
 
 ---
 
-## Quick Start
+## Why not Semgrep?
+
+Semgrep is a good tool. If you already use it and want to write your own Express.js rules, that's a reasonable choice. But there are a few practical differences worth knowing.
+
+**Semgrep requires you to write and maintain rules.** The patterns for "jwt.sign without expiresIn" or "session configured with hardcoded secret" don't ship out of the box for Express. You need to author them, test them, and keep them current. express-audit ships with those rules already written and documented.
+
+**Semgrep's pattern language works at the syntax level.** It matches code shapes. express-audit rules are written in TypeScript against a typed Babel AST, which means they can inspect the semantic meaning of arguments — not just whether they're present, but what their value is. The `COOKIE001` rule doesn't just check for the absence of the string `httpOnly`; it checks whether the `ObjectExpression` passed to `res.cookie()` contains a property with that key set to a truthy value.
+
+**express-audit understands Express conventions specifically.** It knows what it means for a route to lack middleware, that `session()` should not have a string literal as its `secret`, or that `cors()` with no arguments defaults to wildcard. Writing equivalent Semgrep rules for all of that from scratch takes time.
+
+**They can coexist.** If you already use Semgrep for other languages or general patterns, express-audit complements it rather than replacing it. Run both.
+
+---
 
 ```bash
 # Audit the current directory

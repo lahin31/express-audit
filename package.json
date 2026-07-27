@@ -1,34 +1,62 @@
 {
   "name": "express-audit",
-  "version": "1.0.0",
-  "description": "Deterministic security and production readiness auditor for Express.js applications",
+  "version": "0.1.0",
+  "description": "Deterministic security and production readiness auditor for Express.js applications.",
+  "author": "Muhammad Lahin",
+  "license": "MIT",
   "type": "module",
   "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
   "bin": {
     "express-audit": "./dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lahin31/express-audit.git"
+  },
+  "homepage": "https://github.com/lahin31/express-audit#readme",
+  "bugs": {
+    "url": "https://github.com/lahin31/express-audit/issues"
+  },
+  "keywords": [
+    "express",
+    "expressjs",
+    "security",
+    "audit",
+    "security-audit",
+    "static-analysis",
+    "ast",
+    "babel",
+    "owasp",
+    "jwt",
+    "oauth",
+    "casa",
+    "sarif",
+    "cli",
+    "node",
+    "typescript"
+  ],
+  "engines": {
+    "node": ">=18"
   },
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
+    "lint": "eslint .",
     "test": "vitest --run",
     "test:watch": "vitest",
-    "lint": "eslint .",
-    "prepublishOnly": "npm run build"
-  },
-  "keywords": [
-    "express",
-    "security",
-    "audit",
-    "static-analysis",
-    "security-audit",
-    "express-security",
-    "vulnerability-scanner",
-    "production-readiness"
-  ],
-  "author": "",
-  "license": "MIT",
-  "engines": {
-    "node": ">=18.0.0"
+    "prepublishOnly": "npm test && npm run build"
   },
   "dependencies": {
     "@babel/parser": "^7.24.0",

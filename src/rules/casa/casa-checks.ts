@@ -231,20 +231,42 @@ export const casaAuditLoggingRule: Rule = {
   ],
 
   run(context: RuleContext): Finding[] {
-    const isOAuthFile =
-      context.filePath.includes('auth') ||
-      context.filePath.includes('oauth') ||
-      context.filePath.includes('login');
+    if (!context.ast) return [];
 
-    if (!isOAuthFile) return [];
+    const { source, filePath } = context;
 
-    const { source } = context;
+    // Only check files that look like they handle OAuth / authentication flows.
+    // Require at least one OAuth-specific import or a recognisable OAuth
+    // code pattern — this prevents false positives on files like rate limiters
+    // or generic auth middleware that happen to have "auth" in the filename.
+    const hasOAuthImport =
+      source.includes("'passport'") ||
+      source.includes('"passport"') ||
+      source.includes("'openid-client'") ||
+      source.includes('"openid-client"') ||
+      source.includes("'passport-google-oauth'") ||
+      source.includes('"passport-google-oauth"') ||
+      source.includes("'passport-oauth2'") ||
+      source.includes('"passport-oauth2"');
+
+    const hasOAuthPattern =
+      source.includes('access_token') ||
+      source.includes('accessToken') ||
+      source.includes('refresh_token') ||
+      source.includes('refreshToken') ||
+      source.includes('authorization_code') ||
+      source.includes('id_token') ||
+      source.includes('callbackURL') ||
+      source.includes('authorizationURL');
+
+    if (!hasOAuthImport && !hasOAuthPattern) return [];
 
     const hasAuditLog =
       source.includes('audit') ||
       source.includes('auditLog') ||
       source.includes('audit_log') ||
-      (source.includes('logger') && (source.includes('login') || source.includes('oauth') || source.includes('token')));
+      (source.includes('logger') &&
+        (source.includes('login') || source.includes('oauth') || source.includes('token')));
 
     if (!hasAuditLog) {
       return [{
