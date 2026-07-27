@@ -3,6 +3,7 @@ import type { File } from '@babel/types';
 import { traverse, getNodeLine, getObjectProperty, isBoolFalse } from '../../core/ast-helpers.js';
 import type { NodePath } from '@babel/traverse';
 import type * as BabelTypes from '@babel/types';
+import { isEntryFile } from '../../core/is-entry-file.js';
 
 export const xPoweredByRule: Rule = {
   id: 'HEADER001',
@@ -94,15 +95,8 @@ export const xPoweredByRule: Rule = {
       },
     });
 
-    const isAppFile =
-      context.filePath.endsWith('app.ts') ||
-      context.filePath.endsWith('app.js') ||
-      context.filePath.endsWith('server.ts') ||
-      context.filePath.endsWith('server.js') ||
-      context.filePath.endsWith('index.ts') ||
-      context.filePath.endsWith('index.js');
-
-    if (isAppFile && !disabledXPoweredBy && !hasHelmet) {
+    if (isEntryFile(context.filePath, context.projectRoot, context.source) &&
+        !disabledXPoweredBy && !hasHelmet) {
       findings.push({
         ruleId: 'HEADER001',
         severity: 'low',

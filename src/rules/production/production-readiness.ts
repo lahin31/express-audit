@@ -3,16 +3,8 @@ import type { File } from '@babel/types';
 import { traverse, getNodeLine, findImports } from '../../core/ast-helpers.js';
 import type { NodePath } from '@babel/traverse';
 import type * as BabelTypes from '@babel/types';
-
-const isAppFile = (filePath: string) =>
-  filePath.endsWith('app.ts') ||
-  filePath.endsWith('app.js') ||
-  filePath.endsWith('server.ts') ||
-  filePath.endsWith('server.js') ||
-  filePath.endsWith('index.ts') ||
-  filePath.endsWith('index.js') ||
-  filePath.endsWith('main.ts') ||
-  filePath.endsWith('main.js');
+import { isEntryFile } from '../../core/is-entry-file.js';
+import { bothStyles } from '../../core/remediation.js';
 
 /**
  * PROD001 - Missing health endpoint
@@ -37,7 +29,7 @@ export const healthEndpointRule: Rule = {
   ],
 
   run(context: RuleContext): Finding[] {
-    if (!isAppFile(context.filePath)) return [];
+    if (!isEntryFile(context.filePath, context.projectRoot, context.source)) return [];
     if (!context.ast) return [];
 
     const { source } = context;
@@ -88,7 +80,7 @@ export const gracefulShutdownRule: Rule = {
   ],
 
   run(context: RuleContext): Finding[] {
-    if (!isAppFile(context.filePath)) return [];
+    if (!isEntryFile(context.filePath, context.projectRoot, context.source)) return [];
 
     const { source } = context;
     const hasGracefulShutdown =
@@ -139,7 +131,7 @@ export const trustProxyRule: Rule = {
   ],
 
   run(context: RuleContext): Finding[] {
-    if (!isAppFile(context.filePath)) return [];
+    if (!isEntryFile(context.filePath, context.projectRoot, context.source)) return [];
     if (!context.ast) return [];
 
     const ast = context.ast as File;
@@ -192,7 +184,7 @@ export const compressionMissingRule: Rule = {
   title: 'Compression Middleware Missing',
   description: 'No compression middleware detected, which impacts response performance',
   detectorType: 'ast',
-  remediation: 'Install and use compression: npm install compression && app.use(compression())',
+  remediation: bothStyles('compression', 'compression', 'app.use(compression());'),
   references: [
     {
       title: 'Express Compression',
@@ -201,7 +193,7 @@ export const compressionMissingRule: Rule = {
   ],
 
   run(context: RuleContext): Finding[] {
-    if (!isAppFile(context.filePath)) return [];
+    if (!isEntryFile(context.filePath, context.projectRoot, context.source)) return [];
     if (!context.ast) return [];
 
     const ast = context.ast as File;
@@ -218,7 +210,7 @@ export const compressionMissingRule: Rule = {
         title: 'Compression Middleware Missing',
         description: 'No compression middleware detected in app entry',
         impact: 'Without compression, response payloads are larger, increasing bandwidth costs and latency.',
-        remediation: 'Add: const compression = require("compression"); app.use(compression())',
+        remediation: compressionMissingRule.remediation,
         references: compressionMissingRule.references,
         filePath: context.filePath,
       }];

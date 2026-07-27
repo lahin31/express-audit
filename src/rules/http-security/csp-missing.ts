@@ -3,6 +3,7 @@ import type { File } from '@babel/types';
 import { traverse, getObjectProperty, getNodeLine } from '../../core/ast-helpers.js';
 import type { NodePath } from '@babel/traverse';
 import type * as BabelTypes from '@babel/types';
+import { isEntryFile } from '../../core/is-entry-file.js';
 
 export const cspMissingRule: Rule = {
   id: 'CSP001',
@@ -11,7 +12,7 @@ export const cspMissingRule: Rule = {
   title: 'Missing Content Security Policy',
   description: 'No Content Security Policy (CSP) header is configured',
   detectorType: 'ast',
-  remediation: 'Configure CSP with helmet: app.use(helmet.contentSecurityPolicy({ directives: { defaultSrc: ["\'self\'"] } }))',
+  remediation: "Configure CSP with helmet: app.use(helmet.contentSecurityPolicy({ directives: { defaultSrc: [\"'self'\"] } }))",
   references: [
     {
       title: 'MDN - Content Security Policy',
@@ -29,16 +30,7 @@ export const cspMissingRule: Rule = {
 
   run(context: RuleContext): Finding[] {
     if (!context.ast) return [];
-
-    const isAppFile =
-      context.filePath.endsWith('app.ts') ||
-      context.filePath.endsWith('app.js') ||
-      context.filePath.endsWith('server.ts') ||
-      context.filePath.endsWith('server.js') ||
-      context.filePath.endsWith('index.ts') ||
-      context.filePath.endsWith('index.js');
-
-    if (!isAppFile) return [];
+    if (!isEntryFile(context.filePath, context.projectRoot, context.source)) return [];
 
     const ast = context.ast as File;
     let hasCSP = false;

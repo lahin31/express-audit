@@ -55,7 +55,7 @@ describe('CSP001 – Missing Content Security Policy', () => {
 
   it('does not flag when helmet.contentSecurityPolicy() is used explicitly', () => {
     const ctx = createContextFromFixture(
-      `app.use(helmet.contentSecurityPolicy({ directives: { defaultSrc: ["'self'"] } }));`,
+      `const app = express();\napp.use(helmet.contentSecurityPolicy({ directives: { defaultSrc: ["'self'"] } }));`,
       'app.js',
     );
     expect(cspMissingRule.run(ctx)).toHaveLength(0);
@@ -81,7 +81,7 @@ describe('HEADER001 – X-Powered-By', () => {
 
   it('does not flag when app.disable("x-powered-by") is present', () => {
     const ctx = createContextFromFixture(
-      `app.disable('x-powered-by');`,
+      `const app = express();\napp.disable('x-powered-by');\napp.listen(3000);`,
       'server.js',
     );
     expect(xPoweredByRule.run(ctx)).toHaveLength(0);
@@ -89,7 +89,7 @@ describe('HEADER001 – X-Powered-By', () => {
 
   it('does not flag when helmet is used', () => {
     const ctx = createContextFromFixture(
-      `import helmet from 'helmet';\napp.use(helmet());`,
+      `import helmet from 'helmet';\nconst app = express();\napp.use(helmet());`,
       'server.js',
     );
     expect(xPoweredByRule.run(ctx)).toHaveLength(0);

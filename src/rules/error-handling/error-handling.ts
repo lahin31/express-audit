@@ -3,6 +3,7 @@ import type { File } from '@babel/types';
 import { traverse, getNodeLine } from '../../core/ast-helpers.js';
 import type { NodePath } from '@babel/traverse';
 import type * as BabelTypes from '@babel/types';
+import { isEntryFile } from '../../core/is-entry-file.js';
 
 /**
  * ERR001 - Detects raw error objects sent directly to clients
@@ -132,20 +133,7 @@ export const missingErrorHandlerRule: Rule = {
 
   run(context: RuleContext): Finding[] {
     if (!context.ast) return [];
-
-    // Only check app/server entry files
-    const name = context.filePath.replace(/\\/g, '/');
-    const isEntry =
-      name.endsWith('app.js') ||
-      name.endsWith('app.ts') ||
-      name.endsWith('server.js') ||
-      name.endsWith('server.ts') ||
-      name.endsWith('index.js') ||
-      name.endsWith('index.ts') ||
-      name.endsWith('main.js') ||
-      name.endsWith('main.ts');
-
-    if (!isEntry) return [];
+    if (!isEntryFile(context.filePath, context.projectRoot, context.source)) return [];
 
     const ast = context.ast as File;
     let hasErrorHandler = false;
