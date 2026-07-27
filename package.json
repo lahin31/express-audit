@@ -1,6 +1,6 @@
 {
   "name": "express-audit",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Deterministic security and production readiness auditor for Express.js applications.",
   "author": "Muhammad Lahin",
   "license": "MIT",
@@ -56,7 +56,10 @@
     "lint": "eslint .",
     "test": "vitest --run",
     "test:watch": "vitest",
-    "prepublishOnly": "npm test && npm run build"
+    "prepublishOnly": "npm test && npm run build",
+    "release:patch": "standard-version --release-as patch && git push --follow-tags && npm publish",
+    "release:minor": "standard-version --release-as minor && git push --follow-tags && npm publish",
+    "release:major": "standard-version --release-as major && git push --follow-tags && npm publish"
   },
   "dependencies": {
     "@babel/parser": "^7.24.0",
@@ -73,6 +76,7 @@
     "@typescript-eslint/eslint-plugin": "^7.0.0",
     "@typescript-eslint/parser": "^7.0.0",
     "eslint": "^8.56.0",
+    "standard-version": "^9.5.0",
     "typescript": "^5.3.3",
     "vitest": "^1.2.0"
   }
