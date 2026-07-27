@@ -1,6 +1,6 @@
 {
   "name": "express-audit",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Deterministic security and production readiness auditor for Express.js applications.",
   "author": "Muhammad Lahin",
   "license": "MIT",
