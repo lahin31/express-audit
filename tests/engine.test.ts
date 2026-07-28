@@ -69,4 +69,31 @@ describe('AuditEngine', () => {
     expect(result.casaNote).toBeDefined();
     expect(result.casaNote).toContain('Google CASA');
   });
+
+  it('never includes .env files in the audit', async () => {
+    const { writeFileSync, unlinkSync } = require('fs');
+    const envFile = resolve('examples/vulnerable-app/.env.test-secret');
+
+    // Write a fake .env file with a secret pattern
+    writeFileSync(envFile, 'STRIPE_KEY=sk_live_fakekeyfortesting123456\nDB_PASS=supersecret');
+
+    try {
+      const engine = new AuditEngine();
+      engine.registerRules(allRules);
+      const result = await engine.audit(resolve('examples/vulnerable-app'));
+
+      // The .env file must not appear in any finding's filePath
+      const envFindings = result.findings.filter(f => f.filePath?.includes('.env'));
+      expect(envFindings).toHaveLength(0);
+
+      // And it must not appear in the filesAnalyzed count with a secret finding
+      // sourced from it (i.e. the secrets rule skipped it)
+      const secretFindings = result.findings.filter(
+        f => f.filePath === envFile,
+      );
+      expect(secretFindings).toHaveLength(0);
+    } finally {
+      try { unlinkSync(envFile); } catch {}
+    }
+  });
 });

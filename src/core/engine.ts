@@ -55,6 +55,10 @@ export class AuditEngine {
       '**/coverage/**',
       '**/.next/**',
       '**/.nuxt/**',
+      // Never read .env files — they contain secrets and should never be analysed
+      '**/.env',
+      '**/.env.*',
+      '**/*.env',
       ...(this.config.ignore?.paths || []),
     ];
 
@@ -69,10 +73,13 @@ export class AuditEngine {
       allFiles = allFiles.concat(files);
     }
 
-    // Deduplicate files
-    allFiles = [...new Set(allFiles)];
+    // Deduplicate files and hard-exclude .env files regardless of how they were discovered
+    allFiles = [...new Set(allFiles)].filter(f => {
+      const base = f.split('/').pop() ?? '';
+      return !base.startsWith('.env') && !base.endsWith('.env');
+    });
 
-    // Also scan for Docker files and config files
+    // Also scan for Docker files and config files (never .env files)
     const dockerFiles = await glob('**/Dockerfile*', {
       cwd: resolvedRoot,
       ignore: ignorePatterns,
@@ -80,7 +87,7 @@ export class AuditEngine {
       nodir: true,
     });
 
-    const configFiles = await glob('**/{.env*,*.config.js,*.config.ts,docker-compose*.yml}', {
+    const configFiles = await glob('**/{*.config.js,*.config.ts,docker-compose*.yml}', {
       cwd: resolvedRoot,
       ignore: ignorePatterns,
       absolute: true,
