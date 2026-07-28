@@ -364,6 +364,24 @@ examples/             — Vulnerable and secure Express apps
 
 ---
 
+## Trust & Security
+
+express-audit is designed to be deterministic, transparent, and privacy-friendly.
+
+**Static analysis only.** The tool reads your source files and produces a report. It never executes application code, spawns a server, or runs test suites.
+
+**No network requests.** Analysis runs entirely offline. No data is sent anywhere during or after a scan.
+
+**No telemetry or usage tracking.** express-audit collects nothing. There are no analytics, no crash reporters, and no phone-home mechanisms of any kind.
+
+**`.env` files are never read.** Files matching `.env`, `.env.*`, or `*.env` are excluded from the file discovery step before any rule runs. A secret in `.env.production` will never appear in a finding or a report.
+
+**Open source and fully auditable.** Every rule, every scoring algorithm, and every byte of the analysis engine is in this repository. You can read exactly what runs against your code before you run it.
+
+**Rules are documented with rationale.** Every rule in [`docs/rules/`](./docs/rules/) includes a description, a vulnerable example, a secure example, the security impact, and references to OWASP, RFCs, or official documentation — so you understand *why* a finding matters, not just *that* it fired.
+
+---
+
 ## Contributing
 
 Contributions are welcome. See [CONTRIBUTING.md](./CONTRIBUTING.md) for how to write a rule, what tests are required, and the PR process.
