@@ -7,7 +7,7 @@
 | **Category** | CASA Readiness   |
 | **Detector** | AST              |
 
-> ⚠️ **Note:** CASA checks are Google CASA readiness indicators only. Passing these checks does not guarantee passing a full Google CASA assessment, which also covers organizational controls, infrastructure review, penetration testing, and operational practices.
+> ⚠️ **Note:** These checks cover only the portions of Google CASA that can reasonably be verified through static analysis. The majority of a CASA assessment involves organizational controls, infrastructure review, penetration testing, and runtime behaviour that no static tool can evaluate.
 
 ## Description
 

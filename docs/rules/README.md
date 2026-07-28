@@ -90,7 +90,7 @@ Complete documentation for all express-audit rules.
 
 ## Google CASA Readiness
 
-> These checks indicate potential CASA readiness issues detectable via static analysis. Passing does not guarantee passing a full Google CASA assessment.
+> These checks cover only the portions of Google CASA that can reasonably be verified through static analysis. The majority of a CASA assessment — organizational controls, infrastructure review, penetration testing, and runtime behaviour — cannot be evaluated by a static tool and requires manual review.
 
 | Rule | Severity | Title |
 |------|----------|-------|

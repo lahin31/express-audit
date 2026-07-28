@@ -1,6 +1,6 @@
 # express-audit
 
-> Static security analysis for Express.js applications. Detect authentication, authorization, cookie, OAuth, and configuration mistakes before they reach production.
+> Static security analysis for Express.js applications. Detect authentication, authorization, cookie, OAuth, configuration, and performance issues before they reach production.
 
 [![npm version](https://badge.fury.io/js/express-audit.svg)](https://www.npmjs.com/package/express-audit)
 [![CI](https://github.com/yourusername/express-audit/actions/workflows/ci.yml/badge.svg)](https://github.com/yourusername/express-audit/actions/workflows/ci.yml)
@@ -14,15 +14,11 @@ npx express-audit
 
 No configuration required.
 
----
-
 ## Why express-audit?
 
 Dependency scanners tell you about CVEs in packages you installed. express-audit tells you about security mistakes in code you wrote.
 
 Those are different problems. A dependency scanner won't tell you that your `jwt.sign()` call has no expiry, that your session secret is hardcoded, or that `cors()` is called without an origin allowlist. Those are application-level misconfigurations — and they're the ones that show up in bug bounty reports and breach postmortems.
-
----
 
 ## How it works
 
@@ -66,17 +62,13 @@ Your Express Project
 
 This is why a finding like `COOKIE001` is not "the word `httpOnly` is absent from the file" — it's "a `CallExpression` matching `res.cookie()` has an `ObjectExpression` argument where the `httpOnly` property is either missing or set to `false`." The distinction matters for accuracy and for keeping false positives low.
 
----
-
 ## How it's different
 
-**It knows what Express APIs mean.** Rules understand what `res.cookie()`, `jwt.sign()`, `session()`, and `cors()` do. A generic linter sees function calls. express-audit sees a cookie being set without `httpOnly`, a JWT being signed without `expiresIn`, or a session being configured with a hardcoded secret — and flags the specific option that's missing or wrong.
+**It understands many common Express APIs and configuration patterns.** Rules are written against `res.cookie()`, `jwt.sign()`, `session()`, and `cors()` specifically. A generic linter sees function calls. express-audit sees a cookie being set without `httpOnly`, a JWT being signed without `expiresIn`, or a session being configured with a hardcoded secret — and flags the specific option that's missing or wrong. Not every API or configuration style is covered, but the most common patterns are.
 
 **It analyzes supported Express routing and middleware patterns.** For common patterns — `router.delete('/users/:id', handler)` with no middleware argument, or `app.use(cors())` with no options — it can identify what's absent. It works at the AST level on what is written in a single file. It does not perform cross-file data flow analysis, cannot follow middleware registered through factories or dependency injection, and will miss patterns it wasn't written to recognise. False negatives are possible; the tool is conservative to keep false positives low.
 
 **Every finding is actionable.** File path, line number, security impact, and a concrete fix — in every report.
-
----
 
 ## Why AI isn't enough
 
@@ -97,21 +89,15 @@ When a finding appears in a SARIF report uploaded to GitHub Code Scanning, there
 **They work well together.**
 express-audit tells you *what* is wrong and *where*. An LLM is useful for explaining *why* it matters in your specific codebase, drafting a fix, or reviewing a proposed remediation. Use express-audit to find issues systematically, and AI to help resolve them.
 
----
-
 ## Why not Semgrep?
 
-Semgrep is a good tool. If you already use it and want to write your own Express.js rules, that's a reasonable choice. But there are a few practical differences worth knowing.
+Semgrep is a capable tool and express-audit doesn't replace it. If you already use Semgrep, keep using it.
 
-**Semgrep requires you to write and maintain rules.** The patterns for "jwt.sign without expiresIn" or "session configured with hardcoded secret" don't ship out of the box for Express. You need to author them, test them, and keep them current. express-audit ships with those rules already written and documented.
+The practical difference is setup cost. Semgrep ships with a large rule registry, but Express-specific security rules — "jwt.sign without expiresIn", "session with a hardcoded secret", "cors() defaulting to wildcard" — aren't there out of the box. You'd need to author, test, and maintain them yourself.
 
-**Semgrep's pattern language works at the syntax level.** It matches code shapes. express-audit rules are written in TypeScript against a typed Babel AST, which means they can inspect the semantic meaning of arguments — not just whether they're present, but what their value is. The `COOKIE001` rule doesn't just check for the absence of the string `httpOnly`; it checks whether the `ObjectExpression` passed to `res.cookie()` contains a property with that key set to a truthy value.
+express-audit provides batteries-included Express-specific rules without requiring users to author Semgrep patterns. Run it with zero configuration, get findings specific to Express, and move on.
 
-**express-audit understands Express conventions specifically.** It knows what it means for a route to lack middleware, that `session()` should not have a string literal as its `secret`, or that `cors()` with no arguments defaults to wildcard. Writing equivalent Semgrep rules for all of that from scratch takes time.
-
-**They can coexist.** If you already use Semgrep for other languages or general patterns, express-audit complements it rather than replacing it. Run both.
-
----
+**They can coexist.** Semgrep is strong for cross-language scanning and custom taint rules you own. express-audit is narrow but ready to run immediately on any Express project. Run both if you use Semgrep — they don't overlap meaningfully.
 
 ```bash
 # Audit the current directory
@@ -129,8 +115,6 @@ npx express-audit --sarif > results.sarif
 # Fail CI on any critical or high finding
 npx express-audit --fail-on high
 ```
-
----
 
 ## Example Output
 
@@ -188,8 +172,6 @@ Production Readiness       96%  ████████████████
 >
 > The score is a weighted heuristic based on finding severity across rule categories. A score of 100 means no findings were detected — it does not mean the application is secure. Use it to track improvement over time and to prioritise which findings to address first. Do not present it as a security certification.
 
----
-
 ## What It Checks
 
 ### Authentication
@@ -220,15 +202,18 @@ No rate limiting middleware detected on any endpoint, including authentication r
 Hardcoded AWS keys, Google API keys, Stripe keys, GitHub tokens, PEM private keys, database connection strings, and SMTP credentials.
 
 ### Logging
-Passwords, tokens, and API keys written to log output; full request body logging; stack traces returned to clients.
+Passwords, tokens, and API keys written to log output; full request body logging; stack traces returned to clients. Sensitive fields (`api_key`, `secret`, `password`, `access_token`) returned directly in HTTP response bodies.
 
 ### Error Handling
 Raw error objects returned in HTTP responses, missing global error-handler middleware.
 
+### Performance
+Database queries executed inside loops (N+1 queries) — detects `await prisma.findUnique()`, `await db.query()`, and equivalent calls inside `for`, `forEach`, `map`, and `while` constructs across Prisma, Mongoose, Sequelize, TypeORM, and raw drivers.
+
 ### OAuth Security & Google CASA Readiness
 Missing PKCE, state parameter validation, and nonce validation; overly broad OAuth scopes; unencrypted refresh token storage; missing token revocation.
 
-> express-audit includes Google CASA readiness checks that can be verified through static analysis. It is **not** a replacement for a full Google CASA assessment. A complete assessment also covers organizational controls, infrastructure review, penetration testing, and operational practices that cannot be evaluated statically.
+> express-audit covers only the portions of Google CASA that can reasonably be verified through static analysis — things like missing PKCE, unencrypted token storage patterns, and absent state validation. The majority of a CASA assessment involves organizational controls, infrastructure review, penetration testing, and runtime behaviour that no static tool can evaluate.
 
 ### Production Readiness
 Missing health check endpoints, graceful shutdown handlers, trust proxy configuration, and compression middleware.
@@ -236,11 +221,9 @@ Missing health check endpoints, graceful shutdown handlers, trust proxy configur
 ### Docker
 Container running as root, `:latest` image tags, missing `HEALTHCHECK`, secrets baked into the image, and `COPY . .` without a `.dockerignore`.
 
----
-
 ## Rule Reference
 
-Dozens of built-in rules across 15 categories. Full documentation for each rule — including vulnerable examples, secure examples, and remediation steps — is in [`docs/rules/`](./docs/rules/).
+Dozens of built-in rules across 16 categories. Full documentation for each rule — including vulnerable examples, secure examples, and remediation steps — is in [`docs/rules/`](./docs/rules/).
 
 | Prefix | Category | Rules |
 |---|---|---|
@@ -253,14 +236,13 @@ Dozens of built-in rules across 15 categories. Full documentation for each rule 
 | `CORS` | CORS | CORS001 |
 | `RATE` | Rate Limiting | RATE001 |
 | `SECRET` | Secrets | SECRET001–010 |
-| `LOG` | Logging | LOG001, LOG002, LOG003 |
+| `LOG`, `SEC` | Logging & Response Security | LOG001–LOG003, SEC001 |
 | `ERR` | Error Handling | ERR001, ERR002 |
 | `OAUTH` | OAuth Security | OAUTH001, OAUTH002, OAUTH003 |
 | `CASA` | Google CASA Readiness | CASA001–CASA005 |
 | `PROD` | Production Readiness | PROD001–PROD004 |
 | `DOCKER` | Docker | DOCKER001–DOCKER005 |
-
----
+| `PERF` | Performance | PERF001 |
 
 ## Configuration
 
@@ -288,8 +270,6 @@ export default {
 
 Supported config file names: `express-audit.config.js`, `express-audit.config.mjs`, `.express-audit.json`, `.express-auditrc`.
 
----
-
 ## CI Integration
 
 ### Fail on high-severity findings
@@ -311,8 +291,6 @@ Supported config file names: `express-audit.config.js`, `express-audit.config.mj
   with:
     sarif_file: results.sarif
 ```
-
----
 
 ## Programmatic API
 
@@ -341,8 +319,6 @@ engine.registerRules([...authenticationRules, ...sqlRules]);
 const result = await engine.audit('./my-project');
 ```
 
----
-
 ## Architecture
 
 ```
@@ -355,14 +331,12 @@ src/
     config-loader.ts  — Config file discovery
   parser/             — Babel parser wrapper
   reporters/          — CLI, JSON, HTML, SARIF formatters
-  rules/              — growing rule library across 15 categories
+  rules/              — growing rule library across 16 categories
 
 tests/                — unit and integration tests
 docs/rules/           — Per-rule documentation
 examples/             — Vulnerable and secure Express apps
 ```
-
----
 
 ## Trust & Security
 
@@ -380,13 +354,9 @@ express-audit is designed to be deterministic, transparent, and privacy-friendly
 
 **Rules are documented with rationale.** Every rule in [`docs/rules/`](./docs/rules/) includes a description, a vulnerable example, a secure example, the security impact, and references to OWASP, RFCs, or official documentation — so you understand *why* a finding matters, not just *that* it fired.
 
----
-
 ## Contributing
 
 Contributions are welcome. See [CONTRIBUTING.md](./CONTRIBUTING.md) for how to write a rule, what tests are required, and the PR process.
-
----
 
 ## Roadmap
 
@@ -396,8 +366,6 @@ Contributions are welcome. See [CONTRIBUTING.md](./CONTRIBUTING.md) for how to w
 - [ ] Baseline files — suppress known findings, surface only new ones
 - [ ] GitLab CI template
 
----
-
 ## License
 
-MIT © 2024
+MIT © 2026

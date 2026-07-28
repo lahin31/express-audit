@@ -166,10 +166,11 @@ export class AuditEngine {
     // Add CASA note if CASA rules were checked
     const casaFindings = filteredFindings.filter(f => f.category === 'CASA Readiness');
     if (casaFindings.length > 0 || this.rules.some(r => r.category === 'CASA Readiness')) {
-      result.casaNote = 
-        'These are Google CASA readiness checks only. Passing these checks does not guarantee ' +
-        'passing a Google CASA assessment, as organizational controls, infrastructure, ' +
-        'penetration testing, and operational practices require manual review.';
+      result.casaNote =
+        'These checks cover only the portions of Google CASA that can reasonably be verified ' +
+        'through static analysis. The majority of a CASA assessment — organizational controls, ' +
+        'infrastructure review, penetration testing, and runtime behaviour — cannot be ' +
+        'evaluated by a static tool and requires manual review.';
     }
 
     const endTime = Date.now();
