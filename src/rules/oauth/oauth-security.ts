@@ -184,7 +184,10 @@ export const oauthStateMissingRule: Rule = {
 };
 
 /**
- * Detect broad OAuth scopes
+ * Detect broad OAuth scopes.
+ * Only fires in files that actually import an OAuth library — prevents false
+ * positives in config files, ESLint configs, or other files that happen to
+ * contain strings like "full_access" or "*" in a non-OAuth context.
  */
 export const oauthBroadScopesRule: Rule = {
   id: 'OAUTH003',
@@ -209,6 +212,27 @@ export const oauthBroadScopesRule: Rule = {
     if (!context.ast) return [];
 
     const ast = context.ast as File;
+
+    // Gate: only check files that actually import an OAuth library.
+    // Broad strings like "full_access" or "*" appear in config files,
+    // ESLint configs, and many other non-OAuth contexts.
+    const OAUTH_LIBS = [
+      'passport', 'openid-client', 'client-oauth2',
+      'simple-oauth2', 'oauth2-server', 'passport-oauth2',
+      'passport-google-oauth2', 'passport-github2', 'passport-facebook',
+      'googleapis',
+    ];
+    const usesOAuth = OAUTH_LIBS.some(lib => findImports(ast, lib));
+
+    // Also accept files that explicitly reference OAuth scope patterns
+    const hasOAuthScopeContext =
+      context.source.includes('scope') &&
+      (context.source.includes('googleapis') ||
+       context.source.includes('authorizationURL') ||
+       context.source.includes('passport.use('));
+
+    if (!usesOAuth && !hasOAuthScopeContext) return [];
+
     const findings: Finding[] = [];
 
     const broadScopes = [
