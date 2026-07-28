@@ -13,6 +13,7 @@ import { casaRules } from './casa/index.js';
 import { productionRules } from './production/index.js';
 import { dockerRules } from './docker/index.js';
 import { errorHandlingRules } from './error-handling/index.js';
+import { performanceRules } from './performance/index.js';
 import type { Rule } from '../types/index.js';
 
 export const allRules: Rule[] = [
@@ -31,6 +32,7 @@ export const allRules: Rule[] = [
   ...productionRules,
   ...dockerRules,
   ...errorHandlingRules,
+  ...performanceRules,
 ];
 
 export {
@@ -49,4 +51,5 @@ export {
   productionRules,
   dockerRules,
   errorHandlingRules,
+  performanceRules,
 };

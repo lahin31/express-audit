@@ -113,4 +113,5 @@ export const CATEGORY_WEIGHTS: Record<string, number> = {
   'CASA Readiness': 8,
   'Production Readiness': 7,
   Docker: 5,
+  Performance: 6,
 };
