@@ -275,31 +275,30 @@ export const casaAuditLoggingRule: Rule = {
 
     const { source, filePath } = context;
 
-    // Only check files that look like they handle OAuth / authentication flows.
-    // Require at least one OAuth-specific import or a recognisable OAuth
-    // code pattern — this prevents false positives on files like rate limiters
-    // or generic auth middleware that happen to have "auth" in the filename.
-    const hasOAuthImport =
-      source.includes("'passport'") ||
-      source.includes('"passport"') ||
-      source.includes("'openid-client'") ||
-      source.includes('"openid-client"') ||
-      source.includes("'passport-google-oauth'") ||
-      source.includes('"passport-google-oauth"') ||
-      source.includes("'passport-oauth2'") ||
-      source.includes('"passport-oauth2"');
+    // Only check files that use a recognised OAuth library.
+    // Patterns alone (access_token, refresh_token) are too broad — they appear
+    // in AppSumo integrations, payment flows, and other non-OAuth code.
+    // Requiring an actual OAuth library import keeps false positives low.
+    const OAUTH_LIBS = [
+      "'passport'", '"passport"',
+      "'openid-client'", '"openid-client"',
+      "'passport-google-oauth'", '"passport-google-oauth"',
+      "'passport-oauth2'", '"passport-oauth2"',
+      "'passport-github2'", '"passport-github2"',
+      "'passport-facebook'", '"passport-facebook"',
+      "'simple-oauth2'", '"simple-oauth2"',
+    ];
 
-    const hasOAuthPattern =
-      source.includes('access_token') ||
-      source.includes('accessToken') ||
-      source.includes('refresh_token') ||
-      source.includes('refreshToken') ||
-      source.includes('authorization_code') ||
-      source.includes('id_token') ||
+    const hasOAuthImport = OAUTH_LIBS.some(lib => source.includes(lib));
+
+    // Also match files with strong OAuth flow indicators (not just generic token strings)
+    const hasStrongOAuthPattern =
+      source.includes('authorizationURL') ||
       source.includes('callbackURL') ||
-      source.includes('authorizationURL');
+      source.includes('authorization_code') ||
+      (source.includes('id_token') && source.includes('nonce'));
 
-    if (!hasOAuthImport && !hasOAuthPattern) return [];
+    if (!hasOAuthImport && !hasStrongOAuthPattern) return [];
 
     const hasAuditLog =
       source.includes('audit') ||
