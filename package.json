@@ -51,8 +51,10 @@
     "node": ">=18"
   },
   "scripts": {
+    "generate-version": "node scripts/generate-version.mjs",
+    "prebuild": "node scripts/generate-version.mjs",
     "build": "tsc",
-    "dev": "tsc --watch",
+    "dev": "node scripts/generate-version.mjs && tsc --watch",
     "lint": "eslint .",
     "test": "vitest --run",
     "test:watch": "vitest",

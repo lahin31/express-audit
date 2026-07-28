@@ -22,7 +22,7 @@ export function generateCLIReport(result: AuditResult): string {
 
   // Header
   lines.push('');
-  lines.push(chalk.bold.cyan('Express Audit v1.0.0'));
+  lines.push(chalk.bold.cyan(`Express Audit v${result.version}`));
   lines.push('');
 
   // Score

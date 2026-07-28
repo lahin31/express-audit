@@ -1,20 +1,9 @@
 import { glob } from 'glob';
 import { resolve, relative } from 'path';
-import { createRequire } from 'module';
-import { fileURLToPath } from 'url';
 import type { Rule, RuleContext, Finding, AuditResult, AuditConfig, CategoryScore, Severity } from '../types/index.js';
 import { parseFile } from '../parser/index.js';
 import { SEVERITY_WEIGHTS, CATEGORY_WEIGHTS } from '../types/index.js';
-
-// Read version from package.json once at module load — single source of truth
-const _require = createRequire(import.meta.url);
-const TOOL_VERSION: string = (() => {
-  try {
-    return (_require('../../package.json') as { version: string }).version;
-  } catch {
-    return '0.0.0';
-  }
-})();
+import { VERSION as TOOL_VERSION } from '../version.js';
 
 export class AuditEngine {
   private rules: Rule[] = [];
