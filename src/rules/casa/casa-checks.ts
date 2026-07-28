@@ -348,14 +348,9 @@ export const casaNonceRule: Rule = {
   run(context: RuleContext): Finding[] {
     if (!context.ast) return [];
 
-    const isOIDCFile =
-      context.filePath.includes('auth') ||
-      context.filePath.includes('oidc') ||
-      context.filePath.includes('openid');
-
-    if (!isOIDCFile) return [];
-
     const ast = context.ast as File;
+
+    // Require an OIDC library import — don't trigger on path name alone
     const hasOIDC = findImports(ast, 'openid-client') || findImports(ast, 'passport-openidconnect');
     if (!hasOIDC) return [];
 

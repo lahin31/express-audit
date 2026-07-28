@@ -82,7 +82,10 @@ export const oauthPkceRule: Rule = {
 };
 
 /**
- * Detect missing state parameter validation in OAuth callbacks
+ * Detect missing state parameter validation in OAuth callbacks.
+ * Only fires when the file actually imports an OAuth library — prevents
+ * false positives on custom callback routes that happen to have "callback"
+ * or "oauth" in their path but are not OAuth flows.
  */
 export const oauthStateMissingRule: Rule = {
   id: 'OAUTH002',
@@ -107,13 +110,31 @@ export const oauthStateMissingRule: Rule = {
     if (!context.ast) return [];
 
     const ast = context.ast as File;
+
+    // Gate: only check files that actually use an OAuth library.
+    // A route with "callback" in the path is not an OAuth callback unless
+    // the file imports passport, openid-client, or a similar library.
+    const OAUTH_LIBS = [
+      'passport', 'openid-client', 'client-oauth2',
+      'simple-oauth2', 'oauth2-server', 'passport-oauth2',
+      'passport-google-oauth2', 'passport-github2', 'passport-facebook',
+    ];
+    const usesOAuth = OAUTH_LIBS.some(lib => findImports(ast, lib));
+
+    // Also accept files that directly construct OAuth URLs (authorizationURL pattern)
+    const hasOAuthPattern =
+      context.source.includes('authorizationURL') ||
+      context.source.includes('callbackURL') ||
+      context.source.includes('authorization_code');
+
+    if (!usesOAuth && !hasOAuthPattern) return [];
+
     const findings: Finding[] = [];
 
     traverse(ast, {
       CallExpression(path: NodePath<BabelTypes.CallExpression>) {
         const callee = path.node.callee;
 
-        // Look for route handlers named "callback" that don't check state
         if (
           callee.type === 'MemberExpression' &&
           callee.property.type === 'Identifier' &&
@@ -124,20 +145,20 @@ export const oauthStateMissingRule: Rule = {
             routeArg?.type === 'StringLiteral' &&
             (routeArg.value.includes('callback') || routeArg.value.includes('oauth'))
           ) {
-            // Check if the handler function checks for state
             const handler = path.node.arguments[path.node.arguments.length - 1];
             if (
               handler &&
               (handler.type === 'ArrowFunctionExpression' || handler.type === 'FunctionExpression')
             ) {
-              const handlerSource = context.source.slice(
-                handler.start || 0,
-                handler.end || 0
+              // Check handler body AND all arguments for state/passport signals
+              const allArgsSource = context.source.slice(
+                path.node.arguments[1]?.start ?? 0,
+                path.node.end ?? 0,
               );
 
               if (
-                !handlerSource.includes('state') &&
-                !handlerSource.includes('passport.authenticate')
+                !allArgsSource.includes('state') &&
+                !allArgsSource.includes('passport.authenticate')
               ) {
                 findings.push({
                   ruleId: 'OAUTH002',
@@ -198,13 +219,21 @@ export const oauthBroadScopesRule: Rule = {
       'https://www.googleapis.com/auth/gmail',
       'read_write',
       'full_access',
-      '*',
     ];
+
+    // These must match the FULL string value, not be a substring
+    const exactBroadScopes = ['*'];
 
     traverse(ast, {
       StringLiteral(path: NodePath<BabelTypes.StringLiteral>) {
         const value = path.node.value;
-        if (broadScopes.some(scope => value.includes(scope))) {
+
+        // Substring match for URL-style scopes
+        const isSubstringMatch = broadScopes.some(scope => value.includes(scope));
+        // Exact match only for wildcard — avoids matching SQL or glob patterns
+        const isExactMatch = exactBroadScopes.includes(value.trim());
+
+        if (isSubstringMatch || isExactMatch) {
           findings.push({
             ruleId: 'OAUTH003',
             severity: 'medium',

@@ -1,8 +1,20 @@
 import { glob } from 'glob';
 import { resolve, relative } from 'path';
+import { createRequire } from 'module';
+import { fileURLToPath } from 'url';
 import type { Rule, RuleContext, Finding, AuditResult, AuditConfig, CategoryScore, Severity } from '../types/index.js';
 import { parseFile } from '../parser/index.js';
 import { SEVERITY_WEIGHTS, CATEGORY_WEIGHTS } from '../types/index.js';
+
+// Read version from package.json once at module load — single source of truth
+const _require = createRequire(import.meta.url);
+const TOOL_VERSION: string = (() => {
+  try {
+    return (_require('../../package.json') as { version: string }).version;
+  } catch {
+    return '0.0.0';
+  }
+})();
 
 export class AuditEngine {
   private rules: Rule[] = [];
@@ -147,7 +159,7 @@ export class AuditEngine {
     const result: AuditResult = {
       projectRoot: resolvedRoot,
       timestamp: new Date().toISOString(),
-      version: '1.0.0',
+      version: TOOL_VERSION,
       score: overallScore,
       categoryScores,
       findings: filteredFindings,

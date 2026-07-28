@@ -2,6 +2,7 @@
 
 import { program } from 'commander';
 import { resolve } from 'path';
+import { createRequire } from 'module';
 import { writeFileSync } from 'fs';
 import { AuditEngine } from './core/engine.js';
 import { allRules } from './rules/index.js';
@@ -13,10 +14,15 @@ import {
   generateSARIFReport,
 } from './reporters/index.js';
 
+const _require = createRequire(import.meta.url);
+const PKG_VERSION: string = (() => {
+  try { return (_require('../package.json') as { version: string }).version; } catch { return '0.0.0'; }
+})();
+
 program
   .name('express-audit')
-  .description('Deterministic security and production readiness auditor for Express.js applications')
-  .version('1.0.0')
+  .description('Static security analysis for Express.js applications')
+  .version(PKG_VERSION)
   .argument('[directory]', 'Project directory to audit', '.')
   .option('--json', 'Output results as JSON')
   .option('--html', 'Output results as HTML')

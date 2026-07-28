@@ -9,12 +9,16 @@ const rateLimit = require('express-rate-limit');
 const session = require('express-session');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
+const compression = require('compression');
 const { z } = require('zod');
 
 const app = express();
 
 // Trust proxy for correct IP detection
 app.set('trust proxy', 1);
+
+// Compression
+app.use(compression());
 
 // Disable X-Powered-By header
 app.disable('x-powered-by');

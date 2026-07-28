@@ -17,7 +17,7 @@ describe('AuditEngine', () => {
     expect(result.score).toBeLessThanOrEqual(100);
     expect(result.findings).toBeDefined();
     expect(Array.isArray(result.findings)).toBe(true);
-    expect(result.version).toBe('1.0.0');
+    expect(result.version).toMatch(/^\d+\.\d+\.\d+$/);
   });
 
   it('respects disabled rules in config', async () => {
