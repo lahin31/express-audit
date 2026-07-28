@@ -94,6 +94,27 @@ describe('PROD004 – Compression missing', () => {
     expect(compressionMissingRule.run(ctx)).toHaveLength(0);
   });
 
+  it('does not flag when compression is in a middleware file listed in allFiles', () => {
+    const { writeFileSync, unlinkSync } = require('fs');
+    const { join } = require('path');
+    const { tmpdir } = require('os');
+
+    const mwFile = join(tmpdir(), `ea-test-compression-${Date.now()}.ts`);
+    writeFileSync(mwFile, `import compression from 'compression';\nexport default [compression()];`);
+
+    const ctx = createContextFromFixture(
+      `const express = require('express');\nconst app = express();\napp.listen(3000);`,
+      'app.js',
+    );
+    const ctxWithFiles = { ...ctx, allFiles: [ctx.filePath, mwFile] };
+
+    try {
+      expect(compressionMissingRule.run(ctxWithFiles)).toHaveLength(0);
+    } finally {
+      try { unlinkSync(mwFile); } catch {}
+    }
+  });
+
   it('does not flag a nested middleware file', () => {
     // src/router/index.ts — depth 2, should be skipped
     const ctx = createContextFromFixture(

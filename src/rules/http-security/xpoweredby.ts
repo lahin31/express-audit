@@ -1,9 +1,55 @@
 import type { Rule, RuleContext, Finding } from '../../types/index.js';
 import type { File } from '@babel/types';
-import { traverse, getNodeLine, getObjectProperty, isBoolFalse } from '../../core/ast-helpers.js';
+import { traverse, getObjectProperty, isBoolFalse, findImports } from '../../core/ast-helpers.js';
 import type { NodePath } from '@babel/traverse';
 import type * as BabelTypes from '@babel/types';
 import { isEntryFile } from '../../core/is-entry-file.js';
+import { parseFile } from '../../parser/index.js';
+import { readFileSync, existsSync } from 'fs';
+
+/**
+ * Check if the given AST disables X-Powered-By or uses helmet.
+ */
+function astDisablesXPoweredBy(ast: File): boolean {
+  let disabled = false;
+
+  traverse(ast, {
+    // app.disable("x-powered-by")
+    CallExpression(path: NodePath<BabelTypes.CallExpression>) {
+      const callee = path.node.callee;
+
+      if (
+        callee.type === 'MemberExpression' &&
+        callee.property.type === 'Identifier' &&
+        callee.property.name === 'disable'
+      ) {
+        const arg = path.node.arguments[0];
+        if (arg?.type === 'StringLiteral' && arg.value.toLowerCase() === 'x-powered-by') {
+          disabled = true;
+        }
+      }
+
+      // app.set("x-powered-by", false)
+      if (
+        callee.type === 'MemberExpression' &&
+        callee.property.type === 'Identifier' &&
+        callee.property.name === 'set'
+      ) {
+        const [keyArg, valArg] = path.node.arguments;
+        if (
+          keyArg?.type === 'StringLiteral' &&
+          keyArg.value.toLowerCase() === 'x-powered-by' &&
+          valArg?.type === 'BooleanLiteral' &&
+          !(valArg as BabelTypes.BooleanLiteral).value
+        ) {
+          disabled = true;
+        }
+      }
+    },
+  });
+
+  return disabled;
+}
 
 export const xPoweredByRule: Rule = {
   id: 'HEADER001',
@@ -26,90 +72,40 @@ export const xPoweredByRule: Rule = {
 
   run(context: RuleContext): Finding[] {
     if (!context.ast) return [];
+    if (!isEntryFile(context.filePath, context.projectRoot, context.source)) return [];
 
-    const ast = context.ast as File;
-    const findings: Finding[] = [];
+    // 1. Check the entry file itself
+    if (findImports(context.ast as File, 'helmet')) return [];
+    if (astDisablesXPoweredBy(context.ast as File)) return [];
 
-    let disabledXPoweredBy = false;
-    let hasHelmet = false;
+    // 2. Scan all project files — helmet or x-powered-by disable may be in a
+    //    dedicated middleware setup file (e.g. middlewares/default.ts)
+    for (const filePath of context.allFiles) {
+      if (filePath === context.filePath) continue;
+      if (!existsSync(filePath)) continue;
 
-    traverse(ast, {
-      CallExpression(path: NodePath<BabelTypes.CallExpression>) {
-        const callee = path.node.callee;
+      let src: string;
+      try { src = readFileSync(filePath, 'utf-8'); } catch { continue; }
 
-        // Check for app.disable("x-powered-by")
-        if (
-          callee.type === 'MemberExpression' &&
-          callee.property.type === 'Identifier' &&
-          callee.property.name === 'disable'
-        ) {
-          const arg = path.node.arguments[0];
-          if (
-            arg?.type === 'StringLiteral' &&
-            arg.value.toLowerCase() === 'x-powered-by'
-          ) {
-            disabledXPoweredBy = true;
-          }
-        }
+      // Fast filter — only parse if file mentions helmet or x-powered-by
+      if (!src.includes('helmet') && !src.includes('x-powered-by')) continue;
 
-        // Check for helmet import/use
-        if (
-          callee.type === 'Identifier' && callee.name === 'helmet' ||
-          (callee.type === 'MemberExpression' &&
-           callee.property.type === 'Identifier' &&
-           callee.property.name === 'use' &&
-           path.node.arguments[0]?.type === 'CallExpression')
-        ) {
-          // Check if helmet() is passed as an argument
-          const arg = path.node.arguments[0];
-          if (
-            arg?.type === 'CallExpression' &&
-            arg.callee.type === 'Identifier' &&
-            arg.callee.name === 'helmet'
-          ) {
-            hasHelmet = true;
-          }
-        }
+      const { ast } = parseFile(filePath);
+      if (!ast) continue;
 
-        // Check for app.set("x-powered-by", false)
-        if (
-          callee.type === 'MemberExpression' &&
-          callee.property.type === 'Identifier' &&
-          callee.property.name === 'set'
-        ) {
-          const [keyArg, valArg] = path.node.arguments;
-          if (
-            keyArg?.type === 'StringLiteral' &&
-            keyArg.value.toLowerCase() === 'x-powered-by' &&
-            valArg?.type === 'BooleanLiteral' &&
-            !(valArg as BabelTypes.BooleanLiteral).value
-          ) {
-            disabledXPoweredBy = true;
-          }
-        }
-      },
-      ImportDeclaration(path: NodePath<BabelTypes.ImportDeclaration>) {
-        if (path.node.source.value === 'helmet') {
-          hasHelmet = true;
-        }
-      },
-    });
-
-    if (isEntryFile(context.filePath, context.projectRoot, context.source) &&
-        !disabledXPoweredBy && !hasHelmet) {
-      findings.push({
-        ruleId: 'HEADER001',
-        severity: 'low',
-        category: 'HTTP Security',
-        title: 'X-Powered-By Header Enabled',
-        description: 'X-Powered-By header is not disabled, exposing Express version information',
-        impact: 'Reveals server technology to potential attackers, aiding in targeted vulnerability research.',
-        remediation: 'Add: app.disable("x-powered-by") or use helmet()',
-        references: xPoweredByRule.references,
-        filePath: context.filePath,
-      });
+      if (findImports(ast, 'helmet') || astDisablesXPoweredBy(ast)) return [];
     }
 
-    return findings;
+    return [{
+      ruleId: 'HEADER001',
+      severity: 'low',
+      category: 'HTTP Security',
+      title: 'X-Powered-By Header Enabled',
+      description: 'X-Powered-By header is not disabled in the project',
+      impact: 'Reveals server technology to potential attackers, aiding in targeted vulnerability research.',
+      remediation: 'Add: app.disable("x-powered-by") or use helmet()',
+      references: xPoweredByRule.references,
+      filePath: context.filePath,
+    }];
   },
 };
