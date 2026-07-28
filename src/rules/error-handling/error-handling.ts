@@ -4,6 +4,8 @@ import { traverse, getNodeLine } from '../../core/ast-helpers.js';
 import type { NodePath } from '@babel/traverse';
 import type * as BabelTypes from '@babel/types';
 import { isEntryFile } from '../../core/is-entry-file.js';
+import { parseFile } from '../../parser/index.js';
+import { readFileSync, existsSync } from 'fs';
 
 /**
  * ERR001 - Detects raw error objects sent directly to clients
@@ -136,13 +138,24 @@ export const missingErrorHandlerRule: Rule = {
     if (!isEntryFile(context.filePath, context.projectRoot, context.source)) return [];
 
     const ast = context.ast as File;
+
+    // Names that strongly suggest an error-handling middleware even without
+    // seeing the function body (e.g. app.use(globalErrorHandler))
+    const ERROR_HANDLER_NAME_PATTERNS = [
+      'error', 'err', 'errorhandler', 'errorhandling',
+      'errormiddleware', 'handleerror', 'globalerror',
+      'catcherror', 'errorcatch', 'onerror',
+    ];
+
+    // Identifiers passed to app.use() that look like named error handlers
+    const namedHandlerCandidates: string[] = [];
+
     let hasErrorHandler = false;
 
     traverse(ast, {
       CallExpression(path: NodePath<BabelTypes.CallExpression>) {
         const callee = path.node.callee;
 
-        // app.use(fn) where fn has 4 parameters
         const isAppUse =
           callee.type === 'MemberExpression' &&
           callee.property.type === 'Identifier' &&
@@ -151,37 +164,123 @@ export const missingErrorHandlerRule: Rule = {
         if (!isAppUse) return;
 
         for (const arg of path.node.arguments) {
+          // Case 1: inline 4-arg function — the most explicit form
           const isFourArgFn =
             (arg.type === 'ArrowFunctionExpression' ||
               arg.type === 'FunctionExpression') &&
-            (arg as BabelTypes.ArrowFunctionExpression | BabelTypes.FunctionExpression).params
-              .length === 4;
+            (arg as BabelTypes.ArrowFunctionExpression | BabelTypes.FunctionExpression)
+              .params.length === 4;
 
           if (isFourArgFn) {
             hasErrorHandler = true;
+            return;
+          }
+
+          // Case 2: named identifier passed to app.use()
+          // e.g. app.use(globalErrorHandler), app.use(errorMiddleware)
+          if (arg.type === 'Identifier') {
+            const name = arg.name.toLowerCase();
+
+            // Name itself signals error handling
+            if (ERROR_HANDLER_NAME_PATTERNS.some(p => name.includes(p))) {
+              hasErrorHandler = true;
+              return;
+            }
+
+            // Collect for cross-file lookup below
+            namedHandlerCandidates.push(arg.name);
           }
         }
       },
     });
 
-    if (!hasErrorHandler) {
-      return [
-        {
-          ruleId: 'ERR002',
-          severity: 'medium',
-          category: 'Error Handling',
-          title: 'No Global Error-Handler Middleware',
-          description: 'No 4-argument error handler found in the application entry file',
-          impact:
-            'Without a catch-all error handler, unhandled errors may leak stack traces or crash the process.',
-          remediation:
-            "Add at the end of middleware: app.use((err, req, res, next) => { logger.error(err); res.status(500).json({ error: 'Internal server error' }); });",
-          references: missingErrorHandlerRule.references,
-          filePath: context.filePath,
+    if (hasErrorHandler) return [];
+
+    // Case 3: app.use(someFunction) where someFunction is defined elsewhere
+    // and has 4 parameters. Scan the current file's source first (const/function decl),
+    // then all project files.
+
+    const isFourParamFunction = (fileAst: File, name: string): boolean => {
+      let found = false;
+      traverse(fileAst, {
+        // const name = (err, req, res, next) => {}
+        VariableDeclarator(path: NodePath<BabelTypes.VariableDeclarator>) {
+          if (
+            path.node.id.type === 'Identifier' &&
+            path.node.id.name === name
+          ) {
+            const init = path.node.init;
+            if (
+              init &&
+              (init.type === 'ArrowFunctionExpression' ||
+                init.type === 'FunctionExpression') &&
+              init.params.length === 4
+            ) {
+              found = true;
+            }
+          }
         },
-      ];
+        // function name(err, req, res, next) {}
+        FunctionDeclaration(path: NodePath<BabelTypes.FunctionDeclaration>) {
+          if (
+            path.node.id?.name === name &&
+            path.node.params.length === 4
+          ) {
+            found = true;
+          }
+        },
+        // export function name / export const name
+        ExportNamedDeclaration(path: NodePath<BabelTypes.ExportNamedDeclaration>) {
+          const decl = path.node.declaration;
+          if (!decl) return;
+          if (
+            decl.type === 'FunctionDeclaration' &&
+            decl.id?.name === name &&
+            decl.params.length === 4
+          ) {
+            found = true;
+          }
+        },
+      });
+      return found;
+    };
+
+    for (const candidateName of namedHandlerCandidates) {
+      // Check current file first
+      if (isFourParamFunction(ast as File, candidateName)) {
+        return [];
+      }
+
+      // Check all other project files
+      for (const filePath of context.allFiles) {
+        if (filePath === context.filePath) continue;
+        if (!existsSync(filePath)) continue;
+
+        let src: string;
+        try { src = readFileSync(filePath, 'utf-8'); } catch { continue; }
+        if (!src.includes(candidateName)) continue;
+
+        const { ast: fileAst } = parseFile(filePath);
+        if (fileAst && isFourParamFunction(fileAst, candidateName)) {
+          return [];
+        }
+      }
     }
 
-    return [];
+    return [
+      {
+        ruleId: 'ERR002',
+        severity: 'medium',
+        category: 'Error Handling',
+        title: 'No Global Error-Handler Middleware',
+        description: 'No 4-argument error handler found in the application entry file',
+        impact:
+          'Without a catch-all error handler, unhandled errors may leak stack traces or crash the process.',
+        remediation:
+          "Add at the end of middleware: app.use((err, req, res, next) => { logger.error(err); res.status(500).json({ error: 'Internal server error' }); });",
+        references: missingErrorHandlerRule.references,
+        filePath: context.filePath,
+      },
+    ];
   },
 };

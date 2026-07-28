@@ -40,12 +40,56 @@ describe('ERR002 – Missing global error handler', () => {
     expect(missingErrorHandlerRule.run(ctx)).toHaveLength(1);
   });
 
-  it('does not flag when 4-arg handler present', () => {
+  it('does not flag when inline 4-arg handler is present', () => {
     const ctx = createContextFromFixture(
-      `app.use((err, req, res, next) => { res.status(500).json({ error: 'Internal' }); });`,
+      `const app = express();\napp.use((err, req, res, next) => { res.status(500).json({ error: 'Internal' }); });\napp.listen(3000);`,
       'app.js',
     );
     expect(missingErrorHandlerRule.run(ctx)).toHaveLength(0);
+  });
+
+  it('does not flag when a named function with "error" in the name is used', () => {
+    // app.use(globalErrorHandler) — name contains "error"
+    const ctx = createContextFromFixture(
+      `const app = express();\napp.use(globalErrorHandler);\napp.listen(3000);`,
+      'app.js',
+    );
+    expect(missingErrorHandlerRule.run(ctx)).toHaveLength(0);
+  });
+
+  it('does not flag when named handler is defined in same file with 4 params', () => {
+    const ctx = createContextFromFixture(
+      `const app = express();
+const handleErrors = (err, req, res, next) => { res.status(500).json({ error: 'oops' }); };
+app.use(handleErrors);
+app.listen(3000);`,
+      'app.js',
+    );
+    expect(missingErrorHandlerRule.run(ctx)).toHaveLength(0);
+  });
+
+  it('does not flag when named handler is defined in another project file with 4 params', () => {
+    const { writeFileSync, unlinkSync } = require('fs');
+    const { join } = require('path');
+    const { tmpdir } = require('os');
+
+    const handlerFile = join(tmpdir(), `ea-test-errhandler-${Date.now()}.ts`);
+    writeFileSync(
+      handlerFile,
+      `export const myErrorMiddleware = (err: Error, req: any, res: any, next: any) => {\n  res.status(500).json({ error: 'Internal' });\n};`,
+    );
+
+    const ctx = createContextFromFixture(
+      `const app = express();\napp.use(myErrorMiddleware);\napp.listen(3000);`,
+      'app.js',
+    );
+    const ctxWithFiles = { ...ctx, allFiles: [ctx.filePath, handlerFile] };
+
+    try {
+      expect(missingErrorHandlerRule.run(ctxWithFiles)).toHaveLength(0);
+    } finally {
+      try { unlinkSync(handlerFile); } catch {}
+    }
   });
 
   it('does not flag non-entry files', () => {
