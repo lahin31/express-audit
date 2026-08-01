@@ -127,6 +127,12 @@ express-audit provides batteries-included Express-specific rules without requiri
 # Audit the current directory
 npx express-audit
 
+# Audit a specific subdirectory only
+npx express-audit ./src
+
+# Audit a nested folder
+npx express-audit ./src/routes
+
 # Output JSON (useful for CI pipelines or custom tooling)
 npx express-audit --json > report.json
 
