@@ -25,7 +25,7 @@ it privately so it can be assessed and patched before public disclosure.
 
 ### How to report
 
-Open a [GitHub Security Advisory](https://github.com/lahin31/express-audit/security/advisories/new)
+Open a [GitHub Security Advisory](https://github.com/JSExplore/express-audit/security/advisories/new)
 on the repository. This is the preferred channel — it keeps the report private
 and gives us a shared workspace to coordinate the fix.
 
@@ -82,7 +82,7 @@ We commit to:
 ## Scope
 
 This policy covers the **express-audit npm package** and its source code in
-the [lahin31/express-audit](https://github.com/lahin31/express-audit) repository.
+the [JSExplore/express-audit](https://github.com/JSExplore/express-audit) repository.
 
 Out of scope:
 
@@ -106,5 +106,5 @@ project matures.
 ## Contact
 
 Maintainer: **Muhammad Lahin**
-Repository: [github.com/lahin31/express-audit](https://github.com/lahin31/express-audit)
-Security Advisories: [github.com/lahin31/express-audit/security/advisories](https://github.com/lahin31/express-audit/security/advisories)
+Repository: [github.com/JSExplore/express-audit](https://github.com/JSExplore/express-audit)
+Security Advisories: [github.com/JSExplore/express-audit/security/advisories](https://github.com/JSExplore/express-audit/security/advisories)

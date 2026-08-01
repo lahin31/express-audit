@@ -4,8 +4,8 @@
 
 [![npm version](https://img.shields.io/npm/v/express-audit.svg?style=flat-square&color=cb3837&logo=npm)](https://www.npmjs.com/package/express-audit)
 [![npm downloads](https://img.shields.io/npm/dm/express-audit?style=flat-square&color=cb3837)](https://www.npmjs.com/package/express-audit)
-[![CI](https://github.com/lahin31/express-audit/actions/workflows/ci.yml/badge.svg)](https://github.com/lahin31/express-audit/actions/workflows/ci.yml)
-[![Security Audit](https://github.com/lahin31/express-audit/actions/workflows/security-audit.yml/badge.svg)](https://github.com/lahin31/express-audit/actions/workflows/security-audit.yml)
+[![CI](https://github.com/JSExplore/express-audit/actions/workflows/ci.yml/badge.svg)](https://github.com/JSExplore/express-audit/actions/workflows/ci.yml)
+[![Security Audit](https://github.com/JSExplore/express-audit/actions/workflows/security-audit.yml/badge.svg)](https://github.com/JSExplore/express-audit/actions/workflows/security-audit.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](https://opensource.org/licenses/MIT)
 [![Node.js](https://img.shields.io/badge/node-%3E%3D18-brightgreen?style=flat-square&logo=node.js)](https://nodejs.org)
 [![TypeScript](https://img.shields.io/badge/built%20with-TypeScript-3178c6?style=flat-square&logo=typescript)](https://www.typescriptlang.org)
@@ -249,6 +249,7 @@ After applying the fixes shown in [Real-World Examples](./docs/examples.md), the
 | Document | Description |
 |---|---|
 | [How We Ensure Accuracy](./docs/accuracy.md) | Why AST over regex, how false positives are minimised, what the tool intentionally does not report |
+| [False Positives & False Negatives](./docs/false-positives.md) | Per-rule documentation of where the tool may over-report or under-report, and why |
 | [Real-World Examples](./docs/examples.md) | Vulnerable code → finding → fix → no finding, for five common rules |
 | [Standards & References](./docs/standards.md) | Per-rule mapping to OWASP, RFCs, CWE, and W3C specifications |
 | [Rule Reference](./docs/rules/README.md) | All rules with severity, category, and documentation links |
