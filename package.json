@@ -23,11 +23,11 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/lahin31/express-audit.git"
+    "url": "git+https://github.com/JSExplore/express-audit.git"
   },
-  "homepage": "https://github.com/lahin31/express-audit#readme",
+  "homepage": "https://github.com/JSExplore/express-audit#readme",
   "bugs": {
-    "url": "https://github.com/lahin31/express-audit/issues"
+    "url": "https://github.com/JSExplore/express-audit/issues"
   },
   "keywords": [
     "express",
