@@ -5,6 +5,7 @@
 [![npm version](https://img.shields.io/npm/v/express-audit.svg?style=flat-square&color=cb3837&logo=npm)](https://www.npmjs.com/package/express-audit)
 [![npm downloads](https://img.shields.io/npm/dm/express-audit?style=flat-square&color=cb3837)](https://www.npmjs.com/package/express-audit)
 [![CI](https://github.com/lahin31/express-audit/actions/workflows/ci.yml/badge.svg)](https://github.com/lahin31/express-audit/actions/workflows/ci.yml)
+[![Security Audit](https://github.com/lahin31/express-audit/actions/workflows/security-audit.yml/badge.svg)](https://github.com/lahin31/express-audit/actions/workflows/security-audit.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](https://opensource.org/licenses/MIT)
 [![Node.js](https://img.shields.io/badge/node-%3E%3D18-brightgreen?style=flat-square&logo=node.js)](https://nodejs.org)
 [![TypeScript](https://img.shields.io/badge/built%20with-TypeScript-3178c6?style=flat-square&logo=typescript)](https://www.typescriptlang.org)
@@ -16,6 +17,26 @@ npx express-audit
 ```
 
 No configuration required.
+
+## Trust & Security
+
+express-audit is designed to be deterministic, transparent, and privacy-friendly.
+
+**Static analysis only.** The tool reads your source files and produces a report. It never executes application code, spawns a server, or runs test suites.
+
+**No network requests.** Analysis runs entirely offline. No data is sent anywhere during or after a scan.
+
+**No telemetry or usage tracking.** express-audit collects nothing. There are no analytics, no crash reporters, and no phone-home mechanisms of any kind.
+
+**`.env` files are never read.** Files matching `.env`, `.env.*`, or `*.env` are excluded from the file discovery step before any rule runs. A secret in `.env.production` will never appear in a finding or a report.
+
+**Open source and fully auditable.** Every rule, every scoring algorithm, and every byte of the analysis engine is in this repository. You can read exactly what runs against your code before you run it.
+
+**Every rule maps to a published standard.** All findings reference OWASP, RFCs, CWE, or W3C specifications — not internal opinions. See [Standards & References](./docs/standards.md) for the full per-rule mapping.
+
+**150 tests, all passing.** Every rule is tested against both a vulnerable and a secure implementation before release. See [How We Ensure Accuracy](./docs/accuracy.md) for the testing methodology and false-positive strategy.
+
+**Rules are documented with rationale.** Every rule in [`docs/rules/`](./docs/rules/) includes a description, a vulnerable example, a secure example, the security impact, and references to OWASP, RFCs, or official documentation — so you understand *why* a finding matters, not just *that* it fired.
 
 ## Why express-audit?
 
@@ -121,59 +142,118 @@ npx express-audit --fail-on high
 
 ## Example Output
 
+Real output from running `express-audit` against the bundled [vulnerable example app](./examples/vulnerable-app/app.js).
+
 ```
-Express Audit v1.0.0
+Express Audit v0.1.12
 
-📊 Security Score: 78/100
+📊 Security Score: 79/100
 
-🔴 Critical (3)
+The score is a weighted heuristic. A score of 100 does not mean the application
+is secure; a low score does not mean it is insecure. Use it to track progress
+and prioritise fixes.
+
+🔴 Critical (7)
 ────────────────────────────────────────────────────────────
 JWT001 | Hardcoded JWT Secret
-Location: src/auth/jwt.ts:18
-Impact: Allows an attacker to forge valid tokens and impersonate any user.
-Fix: Use environment variables: jwt.sign(payload, process.env.JWT_SECRET)
+Location: app.js:34
+Impact:   Hardcoded secrets can be extracted from source code, allowing
+          attackers to forge valid JWT tokens and impersonate users.
+Fix:      Use environment variables: jwt.sign(payload, process.env.JWT_SECRET)
+
+AUTH002 | Plaintext Password Comparison
+Location: app.js:67
+Impact:   Storing or comparing plaintext passwords allows credential theft
+          from database breaches.
+Fix:      Use: await bcrypt.compare(inputPassword, storedHash)
 
 SESSION001 | Hardcoded Session Secret
-Location: src/app.ts:21
-Impact: Session cookies can be forged, bypassing authentication entirely.
-Fix: Use: secret: process.env.SESSION_SECRET
+Location: app.js:21
+Impact:   Hardcoded secrets can be extracted from source, allowing session forgery.
+Fix:      Use: secret: process.env.SESSION_SECRET
+
+SQL001 | SQL Injection via Template Literal
+Location: app.js:49
+Impact:   Attackers can inject arbitrary SQL, leading to data theft,
+          modification, or database destruction.
+Fix:      Use parameterized queries: db.query("SELECT ... WHERE id = ?", [userInput])
 
 AUTHZ002 | Admin Route Unprotected
-Location: src/routes/admin.ts:54
-Impact: Any user can access admin functionality.
-Fix: Add auth + RBAC: router.get("/admin", authenticate, requireRole("admin"), handler)
+Location: app.js:54
+Impact:   Unprotected admin routes can be accessed by any user.
+Fix:      router.get("/admin/users", authenticate, requireRole("admin"), handler)
 
-⚠️  High (4)
+DOCKER004 | Secrets in Dockerfile
+Location: Dockerfile:10
+Impact:   Secrets embedded in Docker images can be extracted from image layers.
+Fix:      Pass secrets at runtime via environment variables or Docker secrets
+
+⚠️  High (8)
 ────────────────────────────────────────────────────────────
+JWT002 | JWT Missing Expiration
 AUTH001 | Weak bcrypt Cost Factor
-CORS001 | CORS Allows All Origins
-COOKIE001 | Cookie Missing Security Options
+AUTHZ001 | Sensitive Route Missing Authentication
 HTTP001 | Helmet Middleware Missing
+COOKIE001 | Cookie Missing Security Options
+CORS001 | CORS Allows All Origins
+SECRET008 | Hardcoded Password in Variable
+DOCKER001 | Container Running as Root
 
-📋 Medium (3)
+📋 Medium (5)
 ────────────────────────────────────────────────────────────
 CSP001 | Missing Content Security Policy
+SESSION001 | Session saveUninitialized Should Be False
 RATE001 | No Rate Limiting Detected
 PROD003 | Missing Trust Proxy Configuration
+DOCKER002 | Using Latest Tag
 
-ℹ️  Low (3)
+ℹ️  Low (7)
 ────────────────────────────────────────────────────────────
 HEADER001 | X-Powered-By Header Enabled
 PROD001 | Missing Health Check Endpoint
 PROD002 | Missing Graceful Shutdown
+PROD004 | Compression Middleware Missing
+DOCKER003 | Missing HEALTHCHECK
+DOCKER005 | COPY . . in Dockerfile
 
 📈 Category Scores
 ────────────────────────────────────────────────────────────
-Authentication             30%  ██████░░░░░░░░░░░░░░
-Authorization              65%  █████████████░░░░░░░
-HTTP Security              83%  ████████████████░░░░
-Cookies                    90%  ██████████████████░░
-Production Readiness       96%  ███████████████████░
+Authentication             30% ██████░░░░░░░░░░░░░░
+Docker                     31% ██████░░░░░░░░░░░░░░
+Authorization              65% █████████████░░░░░░░
+Sessions                   68% █████████████░░░░░░░
+SQL Security               75% ███████████████░░░░░
+HTTP Security              83% ████████████████░░░░
+Production Readiness       89% █████████████████░░░
+Cookies                    90% ██████████████████░░
+CORS                       90% ██████████████████░░
+Rate Limiting              95% ███████████████████░
+Input Validation          100% ████████████████████
+Logging                   100% ████████████████████
+OAuth                     100% ████████████████████
+
+Summary
+------------------------------------------------------------
+Total files scanned:  2
+Total findings:      27
+Critical:             7
+High:                 8
+Medium:               5
+Low:                  7
 ```
 
-> **About the Security Score**
->
-> The score is a weighted heuristic based on finding severity across rule categories. A score of 100 means no findings were detected — it does not mean the application is secure. Use it to track improvement over time and to prioritise which findings to address first. Do not present it as a security certification.
+After applying the fixes shown in [Real-World Examples](./docs/examples.md), the same project scores **100/100 with 0 findings**.
+
+## Documentation
+
+| Document | Description |
+|---|---|
+| [How We Ensure Accuracy](./docs/accuracy.md) | Why AST over regex, how false positives are minimised, what the tool intentionally does not report |
+| [Real-World Examples](./docs/examples.md) | Vulnerable code → finding → fix → no finding, for five common rules |
+| [Standards & References](./docs/standards.md) | Per-rule mapping to OWASP, RFCs, CWE, and W3C specifications |
+| [Rule Reference](./docs/rules/README.md) | All rules with severity, category, and documentation links |
+| [Security Policy](./SECURITY.md) | Vulnerability reporting, responsible disclosure, supported versions |
+| [Contributing](./CONTRIBUTING.md) | How to write rules, tests, and documentation |
 
 ## What It Checks
 
@@ -340,22 +420,6 @@ tests/                — unit and integration tests
 docs/rules/           — Per-rule documentation
 examples/             — Vulnerable and secure Express apps
 ```
-
-## Trust & Security
-
-express-audit is designed to be deterministic, transparent, and privacy-friendly.
-
-**Static analysis only.** The tool reads your source files and produces a report. It never executes application code, spawns a server, or runs test suites.
-
-**No network requests.** Analysis runs entirely offline. No data is sent anywhere during or after a scan.
-
-**No telemetry or usage tracking.** express-audit collects nothing. There are no analytics, no crash reporters, and no phone-home mechanisms of any kind.
-
-**`.env` files are never read.** Files matching `.env`, `.env.*`, or `*.env` are excluded from the file discovery step before any rule runs. A secret in `.env.production` will never appear in a finding or a report.
-
-**Open source and fully auditable.** Every rule, every scoring algorithm, and every byte of the analysis engine is in this repository. You can read exactly what runs against your code before you run it.
-
-**Rules are documented with rationale.** Every rule in [`docs/rules/`](./docs/rules/) includes a description, a vulnerable example, a secure example, the security impact, and references to OWASP, RFCs, or official documentation — so you understand *why* a finding matters, not just *that* it fired.
 
 ## Contributing
 
