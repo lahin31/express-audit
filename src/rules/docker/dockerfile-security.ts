@@ -17,8 +17,16 @@ export const dockerRunningAsRootRule: Rule = {
       url: 'https://docs.docker.com/develop/security-best-practices/',
     },
     {
-      title: 'OWASP Docker Security',
+      title: 'OWASP Docker Security Cheat Sheet',
       url: 'https://cheatsheetseries.owasp.org/cheatsheets/Docker_Security_Cheat_Sheet.html',
+    },
+    {
+      title: 'OWASP Top 10 2021 – A05: Security Misconfiguration',
+      url: 'https://owasp.org/Top10/A05_2021-Security_Misconfiguration/',
+    },
+    {
+      title: 'CWE-250: Execution with Unnecessary Privileges',
+      url: 'https://cwe.mitre.org/data/definitions/250.html',
     },
   ],
 

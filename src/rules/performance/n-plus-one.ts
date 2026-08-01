@@ -115,12 +115,16 @@ const users = await prisma.user.findMany({ where: { email: { in: emails } } });
 const userMap = Object.fromEntries(users.map(u => [u.email, u]));`,
   references: [
     {
-      title: 'Prisma - Relation queries and N+1',
+      title: 'OWASP API Security Top 10 2023 – API4: Unrestricted Resource Consumption',
+      url: 'https://owasp.org/www-project-api-security/',
+    },
+    {
+      title: 'Prisma Query Optimization and N+1',
       url: 'https://www.prisma.io/docs/guides/performance-and-optimization/query-optimization-performance',
     },
     {
-      title: 'OWASP - Unrestricted Resource Consumption (API4)',
-      url: 'https://owasp.org/www-project-api-security/',
+      title: 'CWE-1176: Inefficient CPU Computation',
+      url: 'https://cwe.mitre.org/data/definitions/1176.html',
     },
   ],
 

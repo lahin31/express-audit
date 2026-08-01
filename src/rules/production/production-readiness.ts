@@ -21,11 +21,19 @@ export const healthEndpointRule: Rule = {
   remediation: 'Add a health check endpoint: app.get("/health", (req, res) => res.json({ status: "ok" }))',
   references: [
     {
-      title: 'Express Best Practices - Health Checks',
+      title: 'OWASP ASVS v4.0 – V14.5: HTTP Request Header Validation',
+      url: 'https://owasp.org/www-project-application-security-verification-standard/',
+    },
+    {
+      title: 'Express Behind Proxies',
+      url: 'https://expressjs.com/en/guide/behind-proxies.html',
+    },
+    {
+      title: 'Express Health Checks and Graceful Shutdown',
       url: 'https://expressjs.com/en/advanced/healthcheck-graceful-shutdown.html',
     },
     {
-      title: 'Kubernetes Health Checks',
+      title: 'Kubernetes Liveness and Readiness Probes',
       url: 'https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/',
     },
   ],

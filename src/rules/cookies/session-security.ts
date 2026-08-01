@@ -14,12 +14,28 @@ export const sessionSecurityRule: Rule = {
   remediation: 'Configure sessions securely with proper secret, saveUninitialized: false, resave: false, and cookie security options.',
   references: [
     {
-      title: 'Express Session Documentation',
+      title: 'OWASP Session Management Cheat Sheet',
+      url: 'https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html',
+    },
+    {
+      title: 'OWASP ASVS v4.0 – V3.2: Session Binding',
+      url: 'https://owasp.org/www-project-application-security-verification-standard/',
+    },
+    {
+      title: 'OWASP Top 10 2021 – A07: Identification and Authentication Failures',
+      url: 'https://owasp.org/Top10/A07_2021-Identification_and_Authentication_Failures/',
+    },
+    {
+      title: 'express-session Documentation',
       url: 'https://www.npmjs.com/package/express-session',
     },
     {
-      title: 'OWASP Session Management Cheat Sheet',
-      url: 'https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html',
+      title: 'CWE-384: Session Fixation',
+      url: 'https://cwe.mitre.org/data/definitions/384.html',
+    },
+    {
+      title: 'CWE-798: Use of Hard-coded Credentials',
+      url: 'https://cwe.mitre.org/data/definitions/798.html',
     },
   ],
 

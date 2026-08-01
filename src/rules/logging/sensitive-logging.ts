@@ -25,12 +25,16 @@ export const sensitiveLoggingRule: Rule = {
   remediation: 'Sanitize log output to remove sensitive fields. Use a log sanitizer or explicitly omit sensitive properties.',
   references: [
     {
-      title: 'OWASP - Sensitive Data Exposure',
-      url: 'https://owasp.org/www-project-top-ten/2017/A3_2017-Sensitive_Data_Exposure',
+      title: 'OWASP Top 10 2021 – A02: Cryptographic Failures (Sensitive Data Exposure)',
+      url: 'https://owasp.org/Top10/A02_2021-Cryptographic_Failures/',
     },
     {
       title: 'OWASP Logging Cheat Sheet',
       url: 'https://cheatsheetseries.owasp.org/cheatsheets/Logging_Cheat_Sheet.html',
+    },
+    {
+      title: 'OWASP ASVS v4.0 – V7.1: Log Content Requirements',
+      url: 'https://owasp.org/www-project-application-security-verification-standard/',
     },
     {
       title: 'CWE-532: Information Exposure Through Log Files',
@@ -156,8 +160,16 @@ export const stackTraceExposureRule: Rule = {
   remediation: 'Never return stack traces to clients in production. Log errors server-side and return generic error messages.',
   references: [
     {
-      title: 'OWASP - Error Handling',
+      title: 'OWASP – Improper Error Handling',
       url: 'https://owasp.org/www-community/Improper_Error_Handling',
+    },
+    {
+      title: 'OWASP ASVS v4.0 – V7.4: Error Handling',
+      url: 'https://owasp.org/www-project-application-security-verification-standard/',
+    },
+    {
+      title: 'OWASP Top 10 2021 – A05: Security Misconfiguration',
+      url: 'https://owasp.org/Top10/A05_2021-Security_Misconfiguration/',
     },
     {
       title: 'CWE-209: Generation of Error Message Containing Sensitive Information',

@@ -18,16 +18,36 @@ export const cookieSecurityRule: Rule = {
   remediation: 'Set secure cookie options: res.cookie("name", value, { httpOnly: true, secure: true, sameSite: "strict" })',
   references: [
     {
-      title: 'OWASP - Secure Cookie Attribute',
+      title: 'OWASP Secure Cookie Attribute',
       url: 'https://owasp.org/www-community/controls/SecureCookieAttribute',
     },
     {
-      title: 'MDN - Set-Cookie',
+      title: 'OWASP ASVS v4.0 – V3.4: Cookie-based Session Management',
+      url: 'https://owasp.org/www-project-application-security-verification-standard/',
+    },
+    {
+      title: 'OWASP Top 10 2021 – A05: Security Misconfiguration',
+      url: 'https://owasp.org/Top10/A05_2021-Security_Misconfiguration/',
+    },
+    {
+      title: 'RFC 6265 – HTTP State Management Mechanism (Set-Cookie)',
+      url: 'https://www.rfc-editor.org/rfc/rfc6265',
+    },
+    {
+      title: 'MDN – Set-Cookie',
       url: 'https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie',
     },
     {
-      title: 'Express Cookie Documentation',
+      title: 'Express res.cookie() Documentation',
       url: 'https://expressjs.com/en/api.html#res.cookie',
+    },
+    {
+      title: 'CWE-1004: Sensitive Cookie Without HttpOnly Flag',
+      url: 'https://cwe.mitre.org/data/definitions/1004.html',
+    },
+    {
+      title: 'CWE-614: Sensitive Cookie in HTTPS Without Secure Attribute',
+      url: 'https://cwe.mitre.org/data/definitions/614.html',
     },
   ],
 

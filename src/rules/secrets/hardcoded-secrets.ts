@@ -82,12 +82,24 @@ export const hardcodedSecretsRule: Rule = {
   remediation: 'Move all secrets to environment variables or a secrets manager. Use process.env.SECRET_NAME',
   references: [
     {
-      title: 'OWASP - Hardcoded Credentials',
+      title: 'OWASP – Hardcoded Credentials',
       url: 'https://owasp.org/www-community/vulnerabilities/Use_of_hard-coded_password',
+    },
+    {
+      title: 'OWASP Top 10 2021 – A02: Cryptographic Failures',
+      url: 'https://owasp.org/Top10/A02_2021-Cryptographic_Failures/',
+    },
+    {
+      title: 'OWASP ASVS v4.0 – V2.10: Service Authentication Secrets',
+      url: 'https://owasp.org/www-project-application-security-verification-standard/',
     },
     {
       title: 'CWE-798: Use of Hard-coded Credentials',
       url: 'https://cwe.mitre.org/data/definitions/798.html',
+    },
+    {
+      title: 'CWE-312: Cleartext Storage of Sensitive Information',
+      url: 'https://cwe.mitre.org/data/definitions/312.html',
     },
   ],
 

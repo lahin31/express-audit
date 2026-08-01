@@ -14,12 +14,24 @@ export const jwtHardcodedRule: Rule = {
   remediation: 'Move JWT secrets to environment variables and use process.env.JWT_SECRET or a secure configuration management system.',
   references: [
     {
-      title: 'OWASP - Using Hardcoded Secrets',
+      title: 'OWASP - Use of Hard-coded Password',
       url: 'https://owasp.org/www-community/vulnerabilities/Use_of_hard-coded_password',
     },
     {
-      title: 'JWT Best Practices',
-      url: 'https://tools.ietf.org/html/rfc8725',
+      title: 'OWASP Top 10 2021 – A07: Identification and Authentication Failures',
+      url: 'https://owasp.org/Top10/A07_2021-Identification_and_Authentication_Failures/',
+    },
+    {
+      title: 'OWASP ASVS v4.0 – V2.10: Service Authentication',
+      url: 'https://owasp.org/www-project-application-security-verification-standard/',
+    },
+    {
+      title: 'RFC 8725 – JSON Web Token Best Current Practices',
+      url: 'https://www.rfc-editor.org/rfc/rfc8725',
+    },
+    {
+      title: 'CWE-798: Use of Hard-coded Credentials',
+      url: 'https://cwe.mitre.org/data/definitions/798.html',
     },
   ],
 

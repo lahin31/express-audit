@@ -12,8 +12,24 @@ const CASA_REFERENCES = [
     url: 'https://appdefensealliance.dev/casa',
   },
   {
-    title: 'OWASP ASVS',
+    title: 'OWASP ASVS v4.0 – Application Security Verification Standard',
     url: 'https://owasp.org/www-project-application-security-verification-standard/',
+  },
+  {
+    title: 'RFC 6749 – The OAuth 2.0 Authorization Framework',
+    url: 'https://www.rfc-editor.org/rfc/rfc6749',
+  },
+  {
+    title: 'RFC 7636 – Proof Key for Code Exchange (PKCE)',
+    url: 'https://www.rfc-editor.org/rfc/rfc7636',
+  },
+  {
+    title: 'RFC 7009 – OAuth 2.0 Token Revocation',
+    url: 'https://www.rfc-editor.org/rfc/rfc7009',
+  },
+  {
+    title: 'OpenID Connect Core 1.0',
+    url: 'https://openid.net/specs/openid-connect-core-1_0.html',
   },
 ];
 
@@ -104,8 +120,8 @@ export const casaTokenRevocationRule: Rule = {
   remediation: 'Implement token revocation per RFC 7009. Provide an endpoint that invalidates tokens and removes them from storage.',
   references: [
     {
-      title: 'RFC 7009 - OAuth Token Revocation',
-      url: 'https://tools.ietf.org/html/rfc7009',
+      title: 'RFC 7009 – OAuth 2.0 Token Revocation',
+      url: 'https://www.rfc-editor.org/rfc/rfc7009',
     },
     ...CASA_REFERENCES,
   ],
@@ -338,8 +354,12 @@ export const casaNonceRule: Rule = {
   remediation: 'Include a nonce in the authorization request and validate it in the ID token to prevent replay attacks.',
   references: [
     {
-      title: 'OpenID Connect Nonce',
+      title: 'OpenID Connect Core 1.0 – Nonce Implementation Notes',
       url: 'https://openid.net/specs/openid-connect-core-1_0.html#NonceNotes',
+    },
+    {
+      title: 'OAuth 2.0 Security Best Current Practice – Replay Prevention',
+      url: 'https://datatracker.ietf.org/doc/html/draft-ietf-oauth-security-topics',
     },
     ...CASA_REFERENCES,
   ],

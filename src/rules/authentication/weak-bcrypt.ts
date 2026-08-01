@@ -18,7 +18,19 @@ export const weakBcryptRule: Rule = {
       url: 'https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html',
     },
     {
-      title: 'bcrypt documentation',
+      title: 'OWASP ASVS v4.0 – V2.4: Credential Storage',
+      url: 'https://owasp.org/www-project-application-security-verification-standard/',
+    },
+    {
+      title: 'OWASP Top 10 2021 – A02: Cryptographic Failures',
+      url: 'https://owasp.org/Top10/A02_2021-Cryptographic_Failures/',
+    },
+    {
+      title: 'CWE-916: Use of Password Hash With Insufficient Computational Effort',
+      url: 'https://cwe.mitre.org/data/definitions/916.html',
+    },
+    {
+      title: 'bcrypt npm package',
       url: 'https://www.npmjs.com/package/bcrypt',
     },
   ],

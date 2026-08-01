@@ -16,16 +16,28 @@ export const rateLimitMissingRule: Rule = {
   remediation: bothStyles('express-rate-limit', 'rateLimit', 'app.use(rateLimit({ windowMs: 15 * 60 * 1000, max: 100 }));', true),
   references: [
     {
-      title: 'express-rate-limit Documentation',
-      url: 'https://www.npmjs.com/package/express-rate-limit',
+      title: 'OWASP API Security Top 10 2023 – API4: Unrestricted Resource Consumption',
+      url: 'https://owasp.org/www-project-api-security/',
     },
     {
-      title: 'OWASP - API Security Top 10: Unrestricted Resource Consumption',
-      url: 'https://owasp.org/www-project-api-security/',
+      title: 'OWASP ASVS v4.0 – V13.2.6: Rate Limiting',
+      url: 'https://owasp.org/www-project-application-security-verification-standard/',
+    },
+    {
+      title: 'OWASP Denial of Service Cheat Sheet',
+      url: 'https://cheatsheetseries.owasp.org/cheatsheets/Denial_of_Service_Cheat_Sheet.html',
+    },
+    {
+      title: 'CWE-770: Allocation of Resources Without Limits or Throttling',
+      url: 'https://cwe.mitre.org/data/definitions/770.html',
     },
     {
       title: 'Express Security Best Practices',
       url: 'https://expressjs.com/en/advanced/best-practice-security.html',
+    },
+    {
+      title: 'express-rate-limit Documentation',
+      url: 'https://www.npmjs.com/package/express-rate-limit',
     },
   ],
 

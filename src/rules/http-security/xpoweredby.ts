@@ -61,12 +61,24 @@ export const xPoweredByRule: Rule = {
   remediation: 'Disable via: app.disable("x-powered-by") or use helmet() which disables it automatically.',
   references: [
     {
-      title: 'Express Security Best Practices',
+      title: 'Express Security Best Practices – Disable X-Powered-By',
       url: 'https://expressjs.com/en/advanced/best-practice-security.html#do-not-use-default-session-cookie-name',
     },
     {
+      title: 'OWASP Top 10 2021 – A05: Security Misconfiguration',
+      url: 'https://owasp.org/Top10/A05_2021-Security_Misconfiguration/',
+    },
+    {
+      title: 'OWASP ASVS v4.0 – V14.3: Unintended Security Disclosure',
+      url: 'https://owasp.org/www-project-application-security-verification-standard/',
+    },
+    {
       title: 'Helmet hidePoweredBy',
-      url: 'https://helmetjs.github.io/#hidepoweredby',
+      url: 'https://helmetjs.github.io/#hide-powered-by',
+    },
+    {
+      title: 'CWE-200: Exposure of Sensitive Information',
+      url: 'https://cwe.mitre.org/data/definitions/200.html',
     },
   ],
 

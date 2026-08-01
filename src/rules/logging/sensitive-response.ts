@@ -39,12 +39,20 @@ export const sensitiveResponseRule: Rule = {
   remediation: 'Never send secrets, API keys, or private keys in HTTP responses. For tokens, use short-lived values and send only what the client strictly needs.',
   references: [
     {
-      title: 'OWASP - Sensitive Data Exposure',
+      title: 'OWASP Top 10 2021 – A02: Cryptographic Failures',
       url: 'https://owasp.org/Top10/A02_2021-Cryptographic_Failures/',
     },
     {
-      title: 'OWASP - Security Misconfiguration',
+      title: 'OWASP Top 10 2021 – A05: Security Misconfiguration',
       url: 'https://owasp.org/Top10/A05_2021-Security_Misconfiguration/',
+    },
+    {
+      title: 'OWASP ASVS v4.0 – V8.3: Sensitive Private Data',
+      url: 'https://owasp.org/www-project-application-security-verification-standard/',
+    },
+    {
+      title: 'CWE-200: Exposure of Sensitive Information to an Unauthorized Actor',
+      url: 'https://cwe.mitre.org/data/definitions/200.html',
     },
   ],
 

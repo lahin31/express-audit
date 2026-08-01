@@ -21,8 +21,16 @@ export const rawErrorResponseRule: Rule = {
     'Return a generic message to clients and log the full error server-side. Never expose internal error details in API responses.',
   references: [
     {
-      title: 'OWASP - Improper Error Handling',
+      title: 'OWASP – Improper Error Handling',
       url: 'https://owasp.org/www-community/Improper_Error_Handling',
+    },
+    {
+      title: 'OWASP ASVS v4.0 – V7.4: Error Handling',
+      url: 'https://owasp.org/www-project-application-security-verification-standard/',
+    },
+    {
+      title: 'OWASP Top 10 2021 – A05: Security Misconfiguration',
+      url: 'https://owasp.org/Top10/A05_2021-Security_Misconfiguration/',
     },
     {
       title: 'CWE-209: Generation of Error Message Containing Sensitive Information',
@@ -130,6 +138,18 @@ export const missingErrorHandlerRule: Rule = {
     {
       title: 'Express Error Handling Guide',
       url: 'https://expressjs.com/en/guide/error-handling.html',
+    },
+    {
+      title: 'OWASP ASVS v4.0 – V7.4: Error Handling',
+      url: 'https://owasp.org/www-project-application-security-verification-standard/',
+    },
+    {
+      title: 'OWASP Top 10 2021 – A05: Security Misconfiguration',
+      url: 'https://owasp.org/Top10/A05_2021-Security_Misconfiguration/',
+    },
+    {
+      title: 'CWE-390: Detection of Error Condition Without Action',
+      url: 'https://cwe.mitre.org/data/definitions/390.html',
     },
   ],
 
