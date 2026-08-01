@@ -18,8 +18,24 @@ export const plaintextPasswordRule: Rule = {
   remediation: 'Use bcrypt.compare() or argon2.verify() instead of direct string comparison for passwords.',
   references: [
     {
-      title: 'OWASP - Password Storage Cheat Sheet',
+      title: 'OWASP Password Storage Cheat Sheet',
       url: 'https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html',
+    },
+    {
+      title: 'OWASP ASVS v4.0 – V2.4: Credential Storage',
+      url: 'https://owasp.org/www-project-application-security-verification-standard/',
+    },
+    {
+      title: 'OWASP Top 10 2021 – A02: Cryptographic Failures',
+      url: 'https://owasp.org/Top10/A02_2021-Cryptographic_Failures/',
+    },
+    {
+      title: 'CWE-256: Plaintext Storage of a Password',
+      url: 'https://cwe.mitre.org/data/definitions/256.html',
+    },
+    {
+      title: 'CWE-312: Cleartext Storage of Sensitive Information',
+      url: 'https://cwe.mitre.org/data/definitions/312.html',
     },
   ],
 

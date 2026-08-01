@@ -14,12 +14,24 @@ export const jwtNoExpiryRule: Rule = {
   remediation: 'Always set a token expiration: jwt.sign(payload, secret, { expiresIn: "15m" })',
   references: [
     {
-      title: 'OWASP - JWT Security Cheat Sheet',
+      title: 'OWASP JWT Security Cheat Sheet',
       url: 'https://cheatsheetseries.owasp.org/cheatsheets/JSON_Web_Token_for_Java_Cheat_Sheet.html',
     },
     {
-      title: 'RFC 7519 - JWT Claims',
-      url: 'https://tools.ietf.org/html/rfc7519#section-4.1.4',
+      title: 'OWASP ASVS v4.0 – V3.5: Token-based Sessions',
+      url: 'https://owasp.org/www-project-application-security-verification-standard/',
+    },
+    {
+      title: 'RFC 7519 – JWT Claims (exp)',
+      url: 'https://www.rfc-editor.org/rfc/rfc7519#section-4.1.4',
+    },
+    {
+      title: 'RFC 8725 – JWT Best Current Practices §3.9',
+      url: 'https://www.rfc-editor.org/rfc/rfc8725#section-3.9',
+    },
+    {
+      title: 'CWE-613: Insufficient Session Expiration',
+      url: 'https://cwe.mitre.org/data/definitions/613.html',
     },
   ],
 

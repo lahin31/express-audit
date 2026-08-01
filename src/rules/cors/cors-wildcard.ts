@@ -14,16 +14,32 @@ export const corsWildcardRule: Rule = {
   remediation: 'Specify exact allowed origins: cors({ origin: ["https://yourdomain.com"] })',
   references: [
     {
-      title: 'OWASP - CORS',
+      title: 'OWASP CORS Origin Header Scrutiny',
       url: 'https://owasp.org/www-community/attacks/CORS_OriginHeaderScrutiny',
     },
     {
-      title: 'MDN - Cross-Origin Resource Sharing',
+      title: 'OWASP ASVS v4.0 – V14.4: HTTP Security Headers',
+      url: 'https://owasp.org/www-project-application-security-verification-standard/',
+    },
+    {
+      title: 'OWASP Top 10 2021 – A05: Security Misconfiguration',
+      url: 'https://owasp.org/Top10/A05_2021-Security_Misconfiguration/',
+    },
+    {
+      title: 'W3C – Cross-Origin Resource Sharing Specification',
+      url: 'https://www.w3.org/TR/cors/',
+    },
+    {
+      title: 'MDN – Cross-Origin Resource Sharing (CORS)',
       url: 'https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS',
     },
     {
       title: 'Express CORS Middleware',
       url: 'https://expressjs.com/en/resources/middleware/cors.html',
+    },
+    {
+      title: 'CWE-942: Permissive Cross-domain Policy',
+      url: 'https://cwe.mitre.org/data/definitions/942.html',
     },
   ],
 

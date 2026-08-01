@@ -75,12 +75,24 @@ export const cspMissingRule: Rule = {
   remediation: "Configure CSP with helmet: app.use(helmet.contentSecurityPolicy({ directives: { defaultSrc: [\"'self'\"] } }))",
   references: [
     {
-      title: 'MDN - Content Security Policy',
+      title: 'MDN – Content Security Policy',
       url: 'https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP',
     },
     {
       title: 'OWASP CSP Cheat Sheet',
       url: 'https://cheatsheetseries.owasp.org/cheatsheets/Content_Security_Policy_Cheat_Sheet.html',
+    },
+    {
+      title: 'OWASP ASVS v4.0 – V14.4.6: Content Security Policy',
+      url: 'https://owasp.org/www-project-application-security-verification-standard/',
+    },
+    {
+      title: 'OWASP Top 10 2021 – A03: Injection (XSS)',
+      url: 'https://owasp.org/Top10/A03_2021-Injection/',
+    },
+    {
+      title: 'W3C – Content Security Policy Level 3',
+      url: 'https://www.w3.org/TR/CSP3/',
     },
     {
       title: 'Google CSP Guide',

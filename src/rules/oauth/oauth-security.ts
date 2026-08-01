@@ -18,16 +18,28 @@ export const oauthPkceRule: Rule = {
   remediation: 'Implement PKCE by generating a code_verifier and code_challenge for each authorization request.',
   references: [
     {
-      title: 'RFC 7636 - PKCE',
-      url: 'https://tools.ietf.org/html/rfc7636',
+      title: 'RFC 7636 – Proof Key for Code Exchange (PKCE)',
+      url: 'https://www.rfc-editor.org/rfc/rfc7636',
     },
     {
-      title: 'OAuth 2.0 Security Best Current Practice',
-      url: 'https://tools.ietf.org/html/draft-ietf-oauth-security-topics',
+      title: 'RFC 6749 – The OAuth 2.0 Authorization Framework',
+      url: 'https://www.rfc-editor.org/rfc/rfc6749',
+    },
+    {
+      title: 'OAuth 2.0 Security Best Current Practice (draft-ietf-oauth-security-topics)',
+      url: 'https://datatracker.ietf.org/doc/html/draft-ietf-oauth-security-topics',
+    },
+    {
+      title: 'OWASP ASVS v4.0 – V3.5 / V8.3: Token-based Sessions',
+      url: 'https://owasp.org/www-project-application-security-verification-standard/',
     },
     {
       title: 'Google OAuth PKCE Guide',
       url: 'https://developers.google.com/identity/protocols/oauth2/native-app',
+    },
+    {
+      title: 'Google CASA Requirements',
+      url: 'https://appdefensealliance.dev/casa',
     },
   ],
 
@@ -97,12 +109,28 @@ export const oauthStateMissingRule: Rule = {
   remediation: 'Validate the state parameter in OAuth callbacks to prevent CSRF attacks.',
   references: [
     {
-      title: 'OWASP - OAuth CSRF Prevention',
+      title: 'RFC 6749 §10.12 – Cross-Site Request Forgery (state parameter)',
+      url: 'https://www.rfc-editor.org/rfc/rfc6749#section-10.12',
+    },
+    {
+      title: 'RFC 6749 – The OAuth 2.0 Authorization Framework',
+      url: 'https://www.rfc-editor.org/rfc/rfc6749',
+    },
+    {
+      title: 'OAuth 2.0 Security Best Current Practice – §4.7 CSRF',
+      url: 'https://datatracker.ietf.org/doc/html/draft-ietf-oauth-security-topics#section-4.7',
+    },
+    {
+      title: 'OWASP CSRF Prevention Cheat Sheet',
       url: 'https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html',
     },
     {
-      title: 'RFC 6749 - State Parameter',
-      url: 'https://tools.ietf.org/html/rfc6749#section-10.12',
+      title: 'OWASP ASVS v4.0 – V13.2: RESTful Web Service',
+      url: 'https://owasp.org/www-project-application-security-verification-standard/',
+    },
+    {
+      title: 'Google CASA Requirements',
+      url: 'https://appdefensealliance.dev/casa',
     },
   ],
 
@@ -199,11 +227,23 @@ export const oauthBroadScopesRule: Rule = {
   remediation: 'Follow the principle of least privilege: request only the minimum scopes needed.',
   references: [
     {
+      title: 'RFC 6749 – The OAuth 2.0 Authorization Framework (scopes §3.3)',
+      url: 'https://www.rfc-editor.org/rfc/rfc6749#section-3.3',
+    },
+    {
+      title: 'OAuth 2.0 Security Best Current Practice – Scope',
+      url: 'https://datatracker.ietf.org/doc/html/draft-ietf-oauth-security-topics',
+    },
+    {
+      title: 'OWASP Top 10 2021 – A01: Broken Access Control',
+      url: 'https://owasp.org/Top10/A01_2021-Broken_Access_Control/',
+    },
+    {
       title: 'Google OAuth Scopes Best Practices',
       url: 'https://developers.google.com/identity/protocols/oauth2/scopes',
     },
     {
-      title: 'OWASP - OAuth Security',
+      title: 'OWASP OAuth 2.0 Cheat Sheet',
       url: 'https://cheatsheetseries.owasp.org/cheatsheets/OAuth2_Cheat_Sheet.html',
     },
   ],

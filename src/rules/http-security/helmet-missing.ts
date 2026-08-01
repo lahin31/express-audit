@@ -20,8 +20,16 @@ export const helmetMissingRule: Rule = {
       url: 'https://helmetjs.github.io/',
     },
     {
-      title: 'OWASP - Secure Headers Project',
+      title: 'OWASP Secure Headers Project',
       url: 'https://owasp.org/www-project-secure-headers/',
+    },
+    {
+      title: 'OWASP ASVS v4.0 – V14.4: HTTP Security Headers',
+      url: 'https://owasp.org/www-project-application-security-verification-standard/',
+    },
+    {
+      title: 'OWASP Top 10 2021 – A05: Security Misconfiguration',
+      url: 'https://owasp.org/Top10/A05_2021-Security_Misconfiguration/',
     },
     {
       title: 'Express Security Best Practices',

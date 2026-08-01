@@ -105,12 +105,20 @@ export const missingAuthMiddlewareRule: Rule = {
   remediation: 'Add authentication middleware to all state-changing routes: router.delete("/users/:id", authenticate, handler)',
   references: [
     {
-      title: 'OWASP - Broken Access Control',
+      title: 'OWASP Top 10 2021 – A01: Broken Access Control',
       url: 'https://owasp.org/Top10/A01_2021-Broken_Access_Control/',
     },
     {
-      title: 'OWASP - Authentication Cheat Sheet',
+      title: 'OWASP Authentication Cheat Sheet',
       url: 'https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html',
+    },
+    {
+      title: 'OWASP ASVS v4.0 – V4.1: General Access Control',
+      url: 'https://owasp.org/www-project-application-security-verification-standard/',
+    },
+    {
+      title: 'CWE-306: Missing Authentication for Critical Function',
+      url: 'https://cwe.mitre.org/data/definitions/306.html',
     },
   ],
 
@@ -210,8 +218,20 @@ export const adminRouteUnprotectedRule: Rule = {
   remediation: 'Add both authentication and role-based authorization to all admin routes.',
   references: [
     {
-      title: 'OWASP - Access Control Design Principles',
-      url: 'https://owasp.org/www-project-top-ten/2017/A5_2017-Broken_Access_Control',
+      title: 'OWASP Top 10 2021 – A01: Broken Access Control',
+      url: 'https://owasp.org/Top10/A01_2021-Broken_Access_Control/',
+    },
+    {
+      title: 'OWASP Authorization Cheat Sheet',
+      url: 'https://cheatsheetseries.owasp.org/cheatsheets/Authorization_Cheat_Sheet.html',
+    },
+    {
+      title: 'OWASP ASVS v4.0 – V4.2: Operation Level Access Control',
+      url: 'https://owasp.org/www-project-application-security-verification-standard/',
+    },
+    {
+      title: 'CWE-285: Improper Authorization',
+      url: 'https://cwe.mitre.org/data/definitions/285.html',
     },
   ],
 

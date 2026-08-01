@@ -194,5 +194,5 @@ The following classes of vulnerability are outside the scope of express-audit.
 | Runtime / data-flow analysis | Not supported — use Semgrep or CodeQL for those cases |
 
 Security engineers: if you find a false positive or a missed true positive, open an issue at
-[github.com/lahin31/express-audit/issues](https://github.com/lahin31/express-audit/issues).
+[https://github.com/JSExplore/express-audit/issues](https://github.com/JSExplore/express-audit/issues).
 Accurate rules are more useful than comprehensive ones.

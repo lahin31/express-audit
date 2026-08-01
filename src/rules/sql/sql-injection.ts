@@ -18,12 +18,20 @@ export const sqlInjectionRule: Rule = {
   remediation: 'Use parameterized queries: db.query("SELECT * FROM users WHERE id = ?", [req.params.id])',
   references: [
     {
-      title: 'OWASP - SQL Injection',
+      title: 'OWASP – SQL Injection',
       url: 'https://owasp.org/www-community/attacks/SQL_Injection',
     },
     {
       title: 'OWASP SQL Injection Prevention Cheat Sheet',
       url: 'https://cheatsheetseries.owasp.org/cheatsheets/SQL_Injection_Prevention_Cheat_Sheet.html',
+    },
+    {
+      title: 'OWASP Top 10 2021 – A03: Injection',
+      url: 'https://owasp.org/Top10/A03_2021-Injection/',
+    },
+    {
+      title: 'OWASP ASVS v4.0 – V5.3: Output Encoding and Injection Prevention',
+      url: 'https://owasp.org/www-project-application-security-verification-standard/',
     },
     {
       title: 'CWE-89: SQL Injection',
@@ -152,8 +160,16 @@ export const prismaUnsafeRule: Rule = {
   remediation: 'Use $queryRaw with tagged template literals: prisma.$queryRaw`SELECT * FROM User WHERE id = ${id}`',
   references: [
     {
-      title: 'Prisma - SQL Injection Prevention',
+      title: 'Prisma – SQL Injection Prevention',
       url: 'https://www.prisma.io/docs/concepts/components/prisma-client/raw-database-access#sql-injection-prevention',
+    },
+    {
+      title: 'OWASP Top 10 2021 – A03: Injection',
+      url: 'https://owasp.org/Top10/A03_2021-Injection/',
+    },
+    {
+      title: 'CWE-89: SQL Injection',
+      url: 'https://cwe.mitre.org/data/definitions/89.html',
     },
   ],
 
