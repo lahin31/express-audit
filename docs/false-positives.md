@@ -441,6 +441,42 @@ await myRepo.fetch(item.id);  // 'fetch' is not a recognized DB method
 
 ---
 
+### PP001 — Prototype Pollution via Object Merge
+
+**Might report when code is fine (false positive)**
+
+```js
+// May fire — bare function named 'merge' that is unrelated to object merging
+merge(outputStream, inputStream);  // stream merge, not object merge
+```
+
+The rule matches any bare function call named `merge`, `deepMerge`, `extend`, or
+`defaults` with a user-input argument. A stream utility or custom function that happens
+to share one of those names will trigger it.
+
+**Fix:** rename the function or suppress the finding on that line.
+
+**Might stay silent when code is vulnerable (false negative)**
+
+```js
+// ❌ Will NOT fire — user input assigned to a variable first
+const data = req.body;
+Object.assign(config, data);
+
+// ❌ Will NOT fire — custom recursive merge function not in the known list
+myDeepClone(target, req.body);
+
+// ❌ Will NOT fire — spread into an object literal
+const merged = { ...defaults, ...req.body };
+```
+
+Object spread (`{ ...req.body }`) is the most common false negative. It is functionally
+equivalent to `Object.assign` for prototype pollution purposes but produces a different
+AST node (`ObjectExpression` with `SpreadElement`) that this rule does not currently
+cover. A separate rule or an expansion of PP001 would be needed to catch it.
+
+---
+
 ## The bottom line
 
 | What the tool is good at | What it misses |

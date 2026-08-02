@@ -169,6 +169,20 @@ connection strings, SendGrid API keys, and generic hardcoded passwords.
 
 ---
 
+## Input Validation
+
+### PP001 — Prototype Pollution via Object Merge
+
+| Standard | Reference |
+|---|---|
+| OWASP Top 10 2021 | [A03: Injection](https://owasp.org/Top10/A03_2021-Injection/) |
+| OWASP ASVS v4.0 | [V5.1: Input Validation](https://owasp.org/www-project-application-security-verification-standard/) |
+| OWASP | [Prototype Pollution](https://owasp.org/www-community/vulnerabilities/Prototype_Pollution) |
+| CWE | [CWE-1321: Improperly Controlled Modification of Object Prototype](https://cwe.mitre.org/data/definitions/1321.html) |
+| Snyk | [Prototype Pollution Guide](https://learn.snyk.io/lesson/prototype-pollution/) |
+
+---
+
 ## SQL Security
 
 ### SQL001 — SQL Injection Risk
