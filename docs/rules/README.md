@@ -24,6 +24,7 @@ Complete documentation for all express-audit rules.
 |------|----------|-------|
 | VAL001 | 📋 Medium | Unvalidated Request Body |
 | VAL002 | 📋 Medium | Unvalidated Query Parameters |
+| PP001 | ⚠️ High | Prototype Pollution via Object Merge |
 
 ## SQL Security
 
