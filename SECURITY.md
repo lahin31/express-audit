@@ -14,8 +14,6 @@ backported patches.
 Once the project reaches 1.0.0, this table will be updated to reflect a formal
 long-term support window.
 
----
-
 ## Reporting a Vulnerability
 
 **Please do not open a public GitHub issue for security vulnerabilities.**
@@ -57,8 +55,6 @@ A useful report contains:
 If a reported issue turns out not to be a vulnerability, we will let you know
 promptly and explain the reasoning.
 
----
-
 ## Responsible Disclosure
 
 We ask that you:
@@ -92,16 +88,12 @@ Out of scope:
   vulnerable for demonstration purposes
 - General bugs that have no security impact (open a regular issue instead)
 
----
-
 ## Vulnerability Disclosure History
 
 No vulnerabilities have been reported or disclosed to date.
 
 This section will be updated with CVE identifiers and release links as the
 project matures.
-
----
 
 ## Contact
 

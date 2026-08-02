@@ -3,18 +3,11 @@
 This file gives Claude (and other AI coding assistants) the context needed to work
 accurately on express-audit without exploring the codebase from scratch.
 
----
-
 ## What this project is
 
-express-audit is a static security analysis CLI for Express.js applications. It parses
-source files into an AST using `@babel/parser`, runs structured rule visitors over the
-tree, and reports findings with file path, line number, severity, impact, and fix.
+express-audit is a static security analysis CLI for Express.js applications. It parses source files into an AST using `@babel/parser`, runs structured rule visitors over the tree, and reports findings with file path, line number, severity, impact, and fix.
 
-It does not execute application code, make network requests, or write to the project
-being scanned.
-
----
+It does not execute application code, make network requests, or write to the project being scanned.
 
 ## Commands
 
@@ -48,8 +41,6 @@ node dist/cli.js ./src
 `npm test` will fail with "Cannot find module ../version.js" if
 `node scripts/generate-version.mjs` has not been run first. The `prebuild` script runs
 it automatically before `npm run build`.
-
----
 
 ## Project structure
 
@@ -98,8 +89,6 @@ examples/
   secure-app/app.js        Well-secured Express app
 ```
 
----
-
 ## Core types
 
 ```typescript
@@ -140,8 +129,6 @@ interface Finding {
   snippet?: string;
 }
 ```
-
----
 
 ## How to write a rule
 
@@ -199,8 +186,6 @@ export const myRule: Rule = {
 };
 ```
 
----
-
 ## Key AST helpers (`src/core/ast-helpers.ts`)
 
 | Helper | What it does |
@@ -214,8 +199,6 @@ export const myRule: Rule = {
 | `getNodeLine(node)` | Line number from AST node |
 | `getNodeColumn(node)` | Column number from AST node |
 | `getCalleeName(call)` | Returns `"obj.method"` string from a call expression |
-
----
 
 ## Key design decisions
 
@@ -240,8 +223,6 @@ post-discovery filter in `engine.ts`.
 **`bothStyles(pkg, identifier, usage, named?)`** in `src/core/remediation.ts` generates
 remediation strings showing both ESM and CJS import patterns. Use it for any rule that
 recommends installing a package.
-
----
 
 ## How to write tests
 
@@ -276,8 +257,6 @@ fixture name so path-based rules (e.g. `'app.js'`, `'Dockerfile'`) behave correc
 Every rule must have at minimum one test that fires (true positive) and one that does not
 (false positive check).
 
----
-
 ## Rule ID registry
 
 | Prefix | Category | Used |
@@ -306,16 +285,12 @@ Every rule must have at minimum one test that fires (true positive) and one that
 
 Pick the next available number in the appropriate prefix range.
 
----
-
 ## Scoring
 
 - Each category starts at 100 points
 - Deductions per finding: critical −25, high −10, medium −5, low −2, info −0
 - Overall score is a weighted average across categories (weights in `CATEGORY_WEIGHTS`)
 - Score of 100 means no findings — it does not mean the app is secure
-
----
 
 ## Dependencies (runtime only)
 
