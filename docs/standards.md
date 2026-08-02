@@ -169,6 +169,31 @@ connection strings, SendGrid API keys, and generic hardcoded passwords.
 
 ---
 
+## Input Validation
+
+### PP001 — Prototype Pollution via Object Merge
+
+| Standard | Reference |
+|---|---|
+| OWASP Top 10 2021 | [A03: Injection](https://owasp.org/Top10/A03_2021-Injection/) |
+| OWASP ASVS v4.0 | [V5.1: Input Validation](https://owasp.org/www-project-application-security-verification-standard/) |
+| OWASP | [Prototype Pollution](https://owasp.org/www-community/vulnerabilities/Prototype_Pollution) |
+| CWE | [CWE-1321: Improperly Controlled Modification of Object Prototype](https://cwe.mitre.org/data/definitions/1321.html) |
+| Snyk | [Prototype Pollution Guide](https://learn.snyk.io/lesson/prototype-pollution/) |
+
+### INJECT001 — Code Injection via eval or new Function
+
+| Standard | Reference |
+|---|---|
+| OWASP Top 10 2021 | [A03: Injection](https://owasp.org/Top10/A03_2021-Injection/) |
+| OWASP ASVS v4.0 | [V5.2: Sanitization and Sandboxing](https://owasp.org/www-project-application-security-verification-standard/) |
+| OWASP | [Code Injection](https://owasp.org/www-community/attacks/Code_Injection) |
+| CWE | [CWE-94: Improper Control of Generation of Code](https://cwe.mitre.org/data/definitions/94.html) |
+| CWE | [CWE-95: Improper Neutralization of Directives in eval()](https://cwe.mitre.org/data/definitions/95.html) |
+| Node.js | [vm Module Documentation](https://nodejs.org/api/vm.html) |
+
+---
+
 ## SQL Security
 
 ### SQL001 — SQL Injection Risk

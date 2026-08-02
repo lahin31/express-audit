@@ -441,6 +441,71 @@ await myRepo.fetch(item.id);  // 'fetch' is not a recognized DB method
 
 ---
 
+### PP001 — Prototype Pollution via Object Merge
+
+**Might report when code is fine (false positive)**
+
+```js
+// May fire — bare function named 'merge' that is unrelated to object merging
+merge(outputStream, inputStream);  // stream merge, not object merge
+```
+
+The rule matches any bare function call named `merge`, `deepMerge`, `extend`, or
+`defaults` with a user-input argument. A stream utility or custom function that happens
+to share one of those names will trigger it.
+
+**Fix:** rename the function or suppress the finding on that line.
+
+**Might stay silent when code is vulnerable (false negative)**
+
+```js
+// ❌ Will NOT fire — user input assigned to a variable first
+const data = req.body;
+Object.assign(config, data);
+
+// ❌ Will NOT fire — custom recursive merge function not in the known list
+myDeepClone(target, req.body);
+
+// ❌ Will NOT fire — spread into an object literal
+const merged = { ...defaults, ...req.body };
+```
+
+Object spread (`{ ...req.body }`) is the most common false negative. It is functionally
+equivalent to `Object.assign` for prototype pollution purposes but produces a different
+AST node (`ObjectExpression` with `SpreadElement`) that this rule does not currently
+cover. A separate rule or an expansion of PP001 would be needed to catch it.
+
+---
+
+### INJECT001 — Code Injection via eval or new Function
+
+**Might report when code is fine (false positive)**
+
+Almost none. The rule requires both a dangerous sink (`eval`, `new Function`, `vm.*`) AND traceable user input (`req.body`, `req.query`, `req.params`, `req.headers`) in the same expression. A hardcoded string passed to `eval` will not fire.
+
+```js
+eval('1 + 1');                  // will NOT fire — no user input
+new Function('a', 'return a');  // will NOT fire — all string literals
+```
+
+**Might stay silent when code is vulnerable (false negative)**
+
+```js
+// ❌ Will NOT fire — user input stored in a variable first
+const code = req.body.script;
+eval(code);
+
+// ❌ Will NOT fire — user input passed through a function call
+eval(sanitize(req.body.code));  // even if sanitize() does nothing useful
+
+// ❌ Will NOT fire — indirect eval via setTimeout string form
+setTimeout(req.body.code, 0);
+```
+
+The variable-assignment gap is the most important one. If the code assigns user input to a variable and then passes that variable to `eval`, the rule does not fire. This is a known limitation of static analysis without data-flow tracking.
+
+---
+
 ## The bottom line
 
 | What the tool is good at | What it misses |
