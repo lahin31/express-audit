@@ -21,7 +21,7 @@ node scripts/generate-version.mjs
 # Build TypeScript to dist/
 npm run build
 
-# Run all tests (168 tests across 16 files)
+# Run all tests (182 tests across 16 files)
 npm test
 
 # Run tests in watch mode
@@ -266,6 +266,7 @@ Every rule must have at minimum one test that fires (true positive) and one that
 | `AUTHZ` | Authorization | 001–002 |
 | `VAL` | Input Validation | 001–002 |
 | `PP` | Prototype Pollution | 001 |
+| `INJECT` | Code Injection | 001 |
 | `SQL` | SQL Security | 001–002 |
 | `HTTP` | HTTP Security | 001 |
 | `HEADER` | HTTP Headers | 001 |

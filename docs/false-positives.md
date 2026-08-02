@@ -477,6 +477,35 @@ cover. A separate rule or an expansion of PP001 would be needed to catch it.
 
 ---
 
+### INJECT001 — Code Injection via eval or new Function
+
+**Might report when code is fine (false positive)**
+
+Almost none. The rule requires both a dangerous sink (`eval`, `new Function`, `vm.*`) AND traceable user input (`req.body`, `req.query`, `req.params`, `req.headers`) in the same expression. A hardcoded string passed to `eval` will not fire.
+
+```js
+eval('1 + 1');                  // will NOT fire — no user input
+new Function('a', 'return a');  // will NOT fire — all string literals
+```
+
+**Might stay silent when code is vulnerable (false negative)**
+
+```js
+// ❌ Will NOT fire — user input stored in a variable first
+const code = req.body.script;
+eval(code);
+
+// ❌ Will NOT fire — user input passed through a function call
+eval(sanitize(req.body.code));  // even if sanitize() does nothing useful
+
+// ❌ Will NOT fire — indirect eval via setTimeout string form
+setTimeout(req.body.code, 0);
+```
+
+The variable-assignment gap is the most important one. If the code assigns user input to a variable and then passes that variable to `eval`, the rule does not fire. This is a known limitation of static analysis without data-flow tracking.
+
+---
+
 ## The bottom line
 
 | What the tool is good at | What it misses |

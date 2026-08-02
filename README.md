@@ -34,7 +34,7 @@ express-audit is designed to be deterministic, transparent, and privacy-friendly
 
 **Every rule maps to a published standard.** All findings reference OWASP, RFCs, CWE, or W3C specifications — not internal opinions. See [Standards & References](./docs/standards.md) for the full per-rule mapping.
 
-**168 tests, all passing.** Every rule is tested against both a vulnerable and a secure implementation before release. See [How We Ensure Accuracy](./docs/accuracy.md) for the testing methodology and false-positive strategy.
+**182 tests, all passing.** Every rule is tested against both a vulnerable and a secure implementation before release. See [How We Ensure Accuracy](./docs/accuracy.md) for the testing methodology and false-positive strategy.
 
 **Rules are documented with rationale.** Every rule in [`docs/rules/`](./docs/rules/) includes a description, a vulnerable example, a secure example, the security impact, and references to OWASP, RFCs, or official documentation — so you understand *why* a finding matters, not just *that* it fired.
 
@@ -272,7 +272,7 @@ Sensitive routes (`DELETE`, `PATCH`, `PUT`) without authentication middleware, a
 
 ### Input Validation
 
-Direct use of `req.body` and `req.query` without a validation library (Zod, Joi, express-validator). Prototype pollution via `Object.assign`, `_.merge`, and computed property assignment with user-controlled input.
+Direct use of `req.body` and `req.query` without a validation library (Zod, Joi, express-validator). Prototype pollution via `Object.assign`, `_.merge`, and computed property assignment with user-controlled input. Code injection via `eval()`, `new Function()`, and the Node.js `vm` module with user-controlled input.
 
 ### SQL Security
 Raw query string concatenation with user input, unsafe Prisma `$queryRawUnsafe` / `$executeRawUnsafe` calls.
@@ -320,7 +320,7 @@ Dozens of built-in rules across 16 categories. Full documentation for each rule 
 |---|---|---|
 | `JWT`, `AUTH` | Authentication | JWT001, JWT002, AUTH001, AUTH002 |
 | `AUTHZ` | Authorization | AUTHZ001, AUTHZ002 |
-| `VAL`, `PP` | Input Validation | VAL001, VAL002, PP001 |
+| `VAL`, `PP`, `INJECT` | Input Validation | VAL001, VAL002, PP001, INJECT001 |
 | `SQL` | SQL Security | SQL001, SQL002 |
 | `HTTP`, `HEADER`, `CSP` | HTTP Security | HTTP001, CSP001, HEADER001 |
 | `COOKIE`, `SESSION` | Cookies & Sessions | COOKIE001, SESSION001 |

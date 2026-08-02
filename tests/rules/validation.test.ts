@@ -120,3 +120,91 @@ describe('PP001 – Computed property assignment', () => {
     expect(prototypePollutionMergeRule.run(ctx)).toHaveLength(0);
   });
 });
+
+// ---------------------------------------------------------------------------
+// INJECT001 – Code injection via eval / new Function / vm module
+// ---------------------------------------------------------------------------
+import { codeInjectionRule } from '../../src/rules/validation/code-injection.js';
+
+describe('INJECT001 – eval with user input', () => {
+  it('flags eval(req.body.code)', () => {
+    const ctx = createContext(`eval(req.body.code);`);
+    const findings = codeInjectionRule.run(ctx);
+    expect(findings).toHaveLength(1);
+    expect(findings[0].ruleId).toBe('INJECT001');
+    expect(findings[0].severity).toBe('critical');
+  });
+
+  it('flags eval(req.query.expr)', () => {
+    const ctx = createContext(`eval(req.query.expr);`);
+    expect(codeInjectionRule.run(ctx)).toHaveLength(1);
+  });
+
+  it('flags eval with template literal containing user input', () => {
+    const ctx = createContext('eval(`return ${req.body.fn}`)');
+    expect(codeInjectionRule.run(ctx)).toHaveLength(1);
+  });
+
+  it('flags eval with string concatenation of user input', () => {
+    const ctx = createContext(`eval('(' + req.body.code + ')');`);
+    expect(codeInjectionRule.run(ctx)).toHaveLength(1);
+  });
+
+  it('does not flag eval with a hardcoded string', () => {
+    const ctx = createContext(`eval('1 + 1');`);
+    expect(codeInjectionRule.run(ctx)).toHaveLength(0);
+  });
+
+  it('does not flag eval with no arguments', () => {
+    const ctx = createContext(`eval();`);
+    expect(codeInjectionRule.run(ctx)).toHaveLength(0);
+  });
+});
+
+describe('INJECT001 – new Function with user input', () => {
+  it('flags new Function(req.body.code)', () => {
+    const ctx = createContext(`const fn = new Function(req.body.code);`);
+    const findings = codeInjectionRule.run(ctx);
+    expect(findings).toHaveLength(1);
+    expect(findings[0].ruleId).toBe('INJECT001');
+  });
+
+  it('flags new Function with user input as last (body) argument', () => {
+    const ctx = createContext(`const fn = new Function('x', 'y', req.body.expr);`);
+    expect(codeInjectionRule.run(ctx)).toHaveLength(1);
+  });
+
+  it('flags new Function with req.query', () => {
+    const ctx = createContext(`new Function(req.query.fn)();`);
+    expect(codeInjectionRule.run(ctx)).toHaveLength(1);
+  });
+
+  it('does not flag new Function with only string literals', () => {
+    const ctx = createContext(`const fn = new Function('a', 'b', 'return a + b');`);
+    expect(codeInjectionRule.run(ctx)).toHaveLength(0);
+  });
+});
+
+describe('INJECT001 – vm module with user input', () => {
+  it('flags vm.runInNewContext(req.body.script)', () => {
+    const ctx = createContext(`vm.runInNewContext(req.body.script, sandbox);`);
+    const findings = codeInjectionRule.run(ctx);
+    expect(findings).toHaveLength(1);
+    expect(findings[0].ruleId).toBe('INJECT001');
+  });
+
+  it('flags vm.runInThisContext(req.query.code)', () => {
+    const ctx = createContext(`vm.runInThisContext(req.query.code);`);
+    expect(codeInjectionRule.run(ctx)).toHaveLength(1);
+  });
+
+  it('flags new vm.Script(req.body.src)', () => {
+    const ctx = createContext(`const script = new vm.Script(req.body.src);`);
+    expect(codeInjectionRule.run(ctx)).toHaveLength(1);
+  });
+
+  it('does not flag vm.runInNewContext with a hardcoded string', () => {
+    const ctx = createContext(`vm.runInNewContext('1 + 1', {});`);
+    expect(codeInjectionRule.run(ctx)).toHaveLength(0);
+  });
+});
